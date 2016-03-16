@@ -469,7 +469,7 @@ _c?>
 
                     my @after_entry_post_extra_options = LJ::Hooks::run_hooks('after_entry_post_extra_options', user => $ju, itemlink => $itemlink);
                     my $after_entry_post_extra_options = join('', map {$_->[0]} @after_entry_post_extra_options) || '';
-                    
+
                     if ($req{"security"} eq "private") {
                         $$body .=" p?><?p $ML{'.extradata.sec.private'}";
                     } elsif ($req{"security"} eq "usemask") {
@@ -483,8 +483,17 @@ _c?>
                     } else {
                         $$body .=" p?><?p $ML{'.extradata.sec.public'}";
                     }
-                
-                    $$body .=" p?><?p " . BML::ml('.extradata.subject', { subject =>LJ::ehtml( $req{"subject"} ) });
+
+                    my $subject = $req{subject};
+
+                    if ( length $subject > 0 ) {
+                        # use the HTML cleaner on the entry subject,
+                        # then display it without escaping
+                        LJ::CleanHTML::clean_subject( \$subject );
+                        $$body .=" p?><?p " . $ML{'.extradata.subj'} . $subject;
+                    } else {
+                        $$body .=" p?><?p " . $ML{'.extradata.subj'} . $ML{'.extradata.subject.no_subject'};
+                    }
 
                     my $backdatedlink = '';
                     if ( $POST{prop_opt_backdated} or $GET{prop_opt_backdated} ) {

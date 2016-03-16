@@ -36,6 +36,16 @@ sub RecentPage
     $p->{filter_name} = "";
     $p->{filter_tags} = 0;
 
+    # load for quick reply
+    LJ::need_res( { group => "jquery" }, qw(
+            js/jquery/jquery.ui.core.js
+            stc/jquery/jquery.ui.core.css
+            js/jquery/jquery.ui.widget.js
+            js/jquery.quickreply.js
+            stc/css/components/quick-reply.css
+            js/jquery.threadexpander.js
+        ) );
+
     # Link to the friends page as a "group", for use with OpenID "Group Membership Protocol"
     {
         my $is_comm = $u->is_community;
@@ -69,8 +79,14 @@ sub RecentPage
     }
 
     if ( $opts->{securityfilter} ) {
+        my $filter = $u->trust_groups( id => $opts->{securityfilter} );
         $p->{filter_active} = 1;
-        $p->{filter_name} = $opts->{securityfilter};
+        if ( defined $filter ) {
+            $p->{filter_name} = $filter->{groupname};
+        } else {
+            # something went wrong; just use the group number
+            $p->{filter_name} = $opts->{securityfilter};
+        }
     } 
 
     my $get = $opts->{'getargs'};
