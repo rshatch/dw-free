@@ -1,0 +1,41 @@
+---
+paths:
+  /journals/{username}/accesslists:
+    parameters:
+      - name: username
+        in: path
+        description: The username you want accesslist information for
+        required: true
+        schema:
+          type: string
+    get:
+      description: Returns a list of entry accesslists for the journal
+      responses:
+        200:
+          description: A list of accesslists.
+    post:
+      description: Create a new entry accesslist for the journal
+      requestBody:
+        content:
+          type: application/json
+          schema:
+            type: object
+            required:
+            - name
+            properties:
+              name:
+                description: The name of the new accesslist.
+                type: string
+              sortorder:
+                description: Sort order for the new accesslist, 0 to 255.
+                type: integer
+                minimum: 0
+                maximum: 255
+              is_public:
+                description: The visibility of the new accesslist. Default is false (private).
+                type: boolean
+      responses:
+        200:
+          description: The newly created accesslist.
+        403:
+          description: You cannot create accesslists on that journal.

@@ -1,0 +1,20 @@
+---
+paths:
+  /journals/{journal}/entries/defaults:
+    parameters:
+      - name: journal
+        in: path
+        description: The journal you want entry information for
+        type: string
+        required: true
+        schema:
+          type: string
+    get:
+      description: Returns the default entry posting values
+      responses:
+        200:
+          description: a list of recent entries
+        404:
+          description: Journal specified does not exist
+        403:
+          description: You don't have post access for that journal.
