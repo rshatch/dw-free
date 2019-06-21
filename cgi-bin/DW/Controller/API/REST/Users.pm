@@ -33,13 +33,10 @@ use Data::Dumper;
 my $post_access     = DW::Controller::API::REST->path( 'users/post_access.yaml',     1, { 'get' => \&post_access_get } );
 
 sub post_access_get {
-    my ( $self, $opts, $journalname ) = @_;
-    my ( $ok, $rv ) = controller( anonymous => 1 );
-    my $responses = $self->{path}{methods}{GET}{responses};
+    my ( $self, $args ) = @_;
 
-    my $user = LJ::load_user( $journalname );
-    my $remote = $rv->{remote};
-    return $self->rest_error( 'GET', 404 ) unless $user;
+    my $user = LJ::load_user( $args->{path}{username});
+    return $self->rest_error( "404" ) unless $user;
 
     my @journals = $user->posting_access_list;
 
@@ -60,15 +57,12 @@ sub post_access_get {
 #
 # Get a list of journals a user grants reading access to
 ################################################
-my $trust = path('users/trust.yaml', 1, { get => \&trust_get, post => \&trust_post, delete => \&trust_delete});
+my $trust     = DW::Controller::API::REST->path('users/trust.yaml', 1, { get => \&trust_get, post => \&trust_post, delete => \&trust_delete});
 
 sub trust_get {
-    my ( $self, $opts, $journalname ) = @_;
-    my ( $ok, $rv ) = controller( anonymous => 1 );
-    my $responses = $self->{path}{methods}{GET}{responses};
+    my ( $self, $args) = @_;
 
-    my $user = LJ::load_user( $journalname );
-    my $remote = $rv->{remote};
+    my $user = LJ::load_user( $args->{path}{username});
     return $self->rest_error( "404" ) unless $user;
 
     my $trust_list = $user->trust_list;
@@ -87,9 +81,7 @@ sub trust_get {
 }
 
 sub trust_post {
-
-    my $r = $rv->{r};
-    my $post = $r->json();
+    my ( $self, $args) = @_;
 
     my $user = LJ::load_user( $args->{path}{username} );
     my $remote = $args->{user};
@@ -97,10 +89,9 @@ sub trust_post {
     return $self->rest_error( "403" ) unless $user == $remote;
 
     my @not_user;
-    my @journals = $post->{journals};
+    my $journals = $args->{body}{journals};
 
-
-    foreach my $journal (@journals) {
+    foreach my $journal (@{$journals}) {
         my $other_u = LJ::load_user_or_identity( $journal );
         unless ( $other_u ) {
             push @not_user, $journal;
@@ -122,23 +113,18 @@ sub trust_post {
 }
 
 sub trust_delete {
-    my ( $self, $opts, $journalname ) = @_;
-    my ( $ok, $rv ) = controller( anonymous => 1 );
-    my $responses = $self->{path}{methods}{GET}{responses};
+    my ( $self, $args) = @_;
 
-    my $r = $rv->{r};
-    my $post = $r->json();
-
-    my $user = LJ::load_user( $journalname );
-    my $remote = $rv->{remote};
-    return $self->rest_error( 'GET', 404 ) unless $user;
-    return $self->rest_error( 'GET', 403 ) unless $user == $remote;
+    my $user = LJ::load_user( $args->{path}{username});
+    my $remote = $args->{user};
+    return $self->rest_error( "404" ) unless $user;
+    return $self->rest_error( "403" ) unless $user == $remote;
 
     my @not_user;
-    my @journals = $post->{journals};
+    my $journals = $args->{body}{journals};
 
 
-    foreach my $journal (@journals) {
+    foreach my $journal (@{$journals}) {
         my $other_u = LJ::load_user_or_identity( $journal );
         unless ( $other_u ) {
             push @not_user, $journal;
@@ -166,7 +152,7 @@ sub trust_delete {
 #
 # Get a list of journals a user subscribes to
 ################################################
-my $watch = path('users/watch.yaml', 1, { get => \&watch_get});
+#my $watch = path('users/watch.yaml', 1, { get => \&watch_get});
 
 sub watch_get {
     my ( $self, $opts, $journalname ) = @_;
@@ -199,7 +185,7 @@ sub watch_get {
 #
 # Get a list of information about a user
 ################################################
-my $info = path('users.yaml', 1, { get => \&info_get});
+#my $info = path('users.yaml', 1, { get => \&info_get});
 
 sub info_get {
     my ( $self, $opts, $journalname ) = @_;

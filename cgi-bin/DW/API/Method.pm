@@ -197,6 +197,10 @@ sub TO_JSON {
         $json->{parameters} = [ values %{ $self->{params} } ];
     }
 
+    if (defined $self->{requestBody}) {
+        $json->{requestBody} = $self->{requestBody};
+    }
+
     my $responses = $self->{responses};
 
     for my $key ( keys %{ $self->{responses} } ) {

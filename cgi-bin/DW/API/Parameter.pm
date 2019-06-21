@@ -46,6 +46,7 @@ sub define_parameter {
     }
     elsif ( defined $args->{content} ) {
         $parameter->{content} = $args->{content};
+        $parameter->{in} = 'requestBody';
     }
 
     bless $parameter, $class;
@@ -61,9 +62,9 @@ sub define_parameter {
 
 sub _validate {
     my $self = $_[0];
-    for my $field (@REQ_ATTRIBUTES) {
-        croak "$self is missing required field $field" unless defined $self->{$field};
-    }
+    # for my $field (@REQ_ATTRIBUTES) {
+    #     croak "$self is missing required field $field" unless defined $self->{$field};
+    # }
     my $location = $self->{in};
     croak "$location isn't a valid parameter location" unless grep( $location, @LOCATIONS );
 
@@ -112,6 +113,13 @@ sub TO_JSON {
         for my $content_type ( keys %{ $json->{content} } ) {
             delete $json->{content}->{$content_type}{validator};
         }
+    }
+
+    if ($self->{in} eq "requestBody") {
+        #remove some fields that requestBody doesn't need
+        delete $json->{in};
+        delete $json->{name};
+        delete $json->{description};
     }
 
     $json->{required} = $JSON::true if defined $self->{required} && $self->{required};
