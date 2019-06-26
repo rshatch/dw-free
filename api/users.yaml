@@ -4,9 +4,10 @@ paths:
     parameters:
       - name: username
         in: path
-        description: The username you want profile information for
-        type: string
+        description: The journal you want entry information for
         required: true
+        schema:
+          type: string    
     get:
       description: Returns information about a specific user.
       responses:

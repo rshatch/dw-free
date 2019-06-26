@@ -152,16 +152,14 @@ sub trust_delete {
 #
 # Get a list of journals a user subscribes to
 ################################################
-#my $watch = path('users/watch.yaml', 1, { get => \&watch_get});
+my $watch = DW::Controller::API::REST->path('users/watch.yaml', 1, { get => \&watch_get});
 
 sub watch_get {
-    my ( $self, $opts, $journalname ) = @_;
-    my ( $ok, $rv ) = controller( anonymous => 1 );
-    my $responses = $self->{path}{methods}{GET}{responses};
+    my ( $self, $args) = @_;
 
-    my $user = LJ::load_user( $journalname );
-    my $remote = $rv->{remote};
-    return $self->rest_error( 'GET', 404 ) unless $user;
+    my $user = LJ::load_user( $args->{path}{username});
+
+    return $self->rest_error( "404" ) unless $user;
 
     my $watch_list = $user->watch_list;
     my $watched_users = LJ::load_userids( keys %$watch_list );
@@ -185,16 +183,14 @@ sub watch_get {
 #
 # Get a list of information about a user
 ################################################
-#my $info = path('users.yaml', 1, { get => \&info_get});
+my $info = DW::Controller::API::REST->path('users.yaml', 1, { get => \&info_get});
 
 sub info_get {
-    my ( $self, $opts, $journalname ) = @_;
-    my ( $ok, $rv ) = controller( anonymous => 1 );
-    my $responses = $self->{path}{methods}{GET}{responses};
+    my ( $self, $args) = @_;
 
-    my $user = LJ::load_user( $journalname );
-    my $remote = $rv->{remote};
-    return $self->rest_error( 'GET', 404 ) unless $user;
+    my $user = LJ::load_user( $args->{path}{username});
+    my $remote = $args->{user};
+    return $self->rest_error( '404' ) unless $user;
 
     my $profile = $user->profile_page($remote);
     my $type = DW::Pay::get_account_type_name( $user );
