@@ -13,26 +13,27 @@ paths:
       requestBody:
         content:
           application/json:
-            type: object
-            properties:
-              start:
-                type: string
-                description: The beginning of a date range to fetch.
-              end:
-                type: string
-                description: The end of a date range to fetch.
-              count:
-                type: integer
-                description: The number of entries to fetch. FIXME - max
-              offset:
-                type: integer
-                description: The offset from the most recent entry to start fetching from.
-              tag:
-                type: string
-                description: The tag to filter fetched entries by
-              accesslist:
-                type: string
-                description: The security level to filter fetched entries by
+            schema:
+              type: object
+              properties:
+                start:
+                  type: string
+                  description: The beginning of a date range to fetch.
+                end:
+                  type: string
+                  description: The end of a date range to fetch.
+                count:
+                  type: integer
+                  description: The number of entries to fetch. FIXME - max
+                offset:
+                  type: integer
+                  description: The offset from the most recent entry to start fetching from.
+                tag:
+                  type: string
+                  description: The tag to filter fetched entries by
+                accesslist:
+                  type: string
+                  description: The security level to filter fetched entries by
       responses:
         200:
           description: a list of recent entries

@@ -4,10 +4,10 @@ paths:
     parameters:
       - name: username
         in: path
-        description: The username you want crosspost information for
+        description: The journal you want entry information for
         required: true
         schema:
-          type: string
+          type: string   
     get:
       description: Returns a list of crosspost identities for the given journal
       responses:

@@ -17,23 +17,23 @@ paths:
       description: Create a new entry accesslist for the journal
       requestBody:
         content:
-          type: application/json
-          schema:
-            type: object
-            required:
-            - name
-            properties:
-              name:
-                description: The name of the new accesslist.
-                type: string
-              sortorder:
-                description: Sort order for the new accesslist, 0 to 255.
-                type: integer
-                minimum: 0
-                maximum: 255
-              is_public:
-                description: The visibility of the new accesslist. Default is false (private).
-                type: boolean
+          application/json:
+            schema:
+              type: object
+              required:
+              - name
+              properties:
+                name:
+                  description: The name of the new accesslist.
+                  type: string
+                sortorder:
+                  description: Sort order for the new accesslist, 0 to 255.
+                  type: integer
+                  minimum: 0
+                  maximum: 255
+                is_public:
+                  description: The visibility of the new accesslist. Default is false (private).
+                  type: boolean
       responses:
         200:
           description: The newly created accesslist.

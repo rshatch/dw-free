@@ -15,7 +15,6 @@
 #
 
 package DW::Controller::API::Moods;
-use DW::Controller::API::REST qw(path);
 
 use strict;
 use warnings;
@@ -24,21 +23,13 @@ use DW::Request;
 use DW::Controller;
 use JSON;
 use DW::Mood;
-#use DW::API::Path qw(path);
 
 # Define route and associated params
-my $moods = path('moods.yaml', 1, {'get' => \&rest_get_list});
+my $moods = DW::Controller::API::REST->path('moods.yaml', 1, {'get' => \&rest_get_list});
 
 
 sub rest_get_list {
-    my $self = $_[0];
-    
-    # we want to handle the not logged in case ourselves
-    my ( $ok, $rv ) = controller( anonymous => 1 );
-    return $rv unless $ok;
-
-    my $r = $rv->{r};
-
+	my ( $self ) = @_;
     return $self->rest_ok( DW::Mood->get_moods );
 }
 

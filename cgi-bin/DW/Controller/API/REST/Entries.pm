@@ -15,7 +15,6 @@
 #
 
 package DW::Controller::API::REST::Entries;
-use DW::Controller::API::REST qw(path);
 
 use strict;
 use warnings;
@@ -23,8 +22,6 @@ use DW::Routing;
 use DW::Request;
 use DW::Controller;
 use JSON;
-use Data::Dumper;
-#use DW::API::Path qw(path);
 
 ################################################
 # /journals/{journal}/entries
@@ -32,7 +29,7 @@ use Data::Dumper;
 # Get recent entries or post a new entry.
 ################################################
 
-my $entries_all = path('entries_all.yaml', 1, { get => \&rest_get, post => \&new_entry});
+my $entries_all = DW::Controller::API::REST->path('entries_all.yaml', 1, { get => \&rest_get, post => \&new_entry});
 
 ################################################
 # /journals/{journal}/entries/{entry_id}
@@ -40,7 +37,7 @@ my $entries_all = path('entries_all.yaml', 1, { get => \&rest_get, post => \&new
 # Get single entry or update existing entry.
 ################################################
 
-my $entries = path('entries.yaml', 1, { get => \&rest_get, post => \&edit_entry});
+my $entries = DW::Controller::API::REST->path('entries.yaml', 1, { get => \&rest_get, post => \&edit_entry});
 
 ###################################################
 #
@@ -65,32 +62,25 @@ my @modules = qw(
 
 
 sub new_entry {
-    my ( $self, $opts, $journal ) = @_;
-    warn "We hit the post handler with $journal";
+    my ( $self, $args) = @_;
 
-    my ( $ok, $rv ) = controller( anonymous => 1 );
-    return $rv unless $ok;
-
-    my $r = $rv->{r};
-    my $remote = $rv->{remote};
+    my $usejournal = LJ::load_user( $args->{path}{username} );
+    my $remote = $args->{user};
    
-    my $post = $r->json();
+    my $post = $args->{body};
 
-    return $self->rest_error('POST', 401, "You must be logged in to post") unless $remote;
-
-    my $usejournal = LJ::load_user( $journal );
     return $self->rest_error( 'GET', 404 ) unless $usejournal;
 
         # these kinds of errors prevent us from initializing the form at all
     # so abort and return it without the form
     if ( $remote ) {
-        return $self->rest_error('POST', 402, "Only registered users can post.")
+        return $self->rest_error('402')
                 if $remote->is_identity;
 
-        return $self->rest_error('POST', 400, "Sorry: you can't post at this time.")
+        return $self->rest_error('400')
                 unless $remote->can_post;
 
-        return $self->rest_error('POST', 403, "You can't post because of the type of account you have.")
+        return $self->rest_error('403')
                 if $remote->can_post_disabled;
     }
 
@@ -117,10 +107,10 @@ sub new_entry {
         $trust_datetime_value = 0;  # may want to override with client-side JS
     }
 
-        return $self->rest_error('POST', 400, "Must provide entry text.")
+        return $self->rest_error('400')
             unless $post->{text} ne '';
 
-        return $self->rest_error('POST', 403)
+        return $self->rest_error('403')
             unless $remote->can_post_to($usejournal);
 
 
@@ -377,19 +367,21 @@ sub _do_post {
 
 
 sub rest_get {
-    my ( $self, $opts, $journalname, $ditemid ) = @_;
-    my ( $ok, $rv ) = controller( anonymous => 1 );
-    my $responses = $self->{path}{methods}{GET}{responses};
+    my ( $self, $args) = @_;
 
-    my $journal = LJ::load_user( $journalname );
-    my $remote = $rv->{remote};
-    return $self->rest_error( 'GET', 404 ) unless $journal;
+    my $journal = LJ::load_user( $args->{path}{username} );
+    my $remote = $args->{user};
+   
+    my $ditemid = $args->{path}{entry_id};
+    my $opts = $args->{body};
+
+    return $self->rest_error( '404' ) unless $journal;
 
     if ($ditemid ne "") {
         my $item = LJ::Entry->new($journal, ditemid => $ditemid);
-        return $self->rest_error('GET', 404) unless $item;
+        return $self->rest_error('404') unless $item;
 
-        return $self->rest_error('GET', 403) unless $item->visible_to($remote);
+        return $self->rest_error('403') unless $item->visible_to($remote);
     
         return $self->rest_ok( $item );
 
@@ -439,22 +431,16 @@ sub rest_get {
 
 sub edit_entry {
 
-    my ( $self, $opts, $journal, $ditemid ) = @_;
-    warn "We hit the post handler with $journal";
+    my ( $self, $args) = @_;
 
-    my ( $ok, $rv ) = controller( anonymous => 1 );
-    return $rv unless $ok;
-
-    my $r = $rv->{r};
-    my $remote = $rv->{remote};
+    my $usejournal = LJ::load_user( $args->{path}{username} );
+    my $ditemid = $args->{path}{entry_id};
+    my $remote = $args->{user};
    
-    my $post = $r->json();
+    my $post = $args->{body};
 
-    warn Dumper($r);
+    return $self->rest_error('401') unless $remote;
 
-    return $self->rest_error('POST', 401, "You must be logged in to post") unless $remote;
-
-    my $usejournal = LJ::load_user( $journal );
 
         # we can always trust this value:
     # it either came straight from the entry
@@ -467,12 +453,12 @@ sub edit_entry {
     # and does the entry we got match the provided ditemid exactly?
     my $anum = $ditemid % 256;
     my $itemid = $ditemid >> 8;
-    return $self->rest_error('POST', 404, "Entry not found")
+    return $self->rest_error('404')
         unless $entry_obj->editable_by( $remote )
             && $anum == $entry_obj->anum && $itemid == $entry_obj->jitemid;
 
 
-    return $self->rest_error('POST', 400, "Must provide entry text.")
+    return $self->rest_error('400')
         unless $post->{text} ne '';
 
     # so at this point, we know that we are authorized to edit this entry
