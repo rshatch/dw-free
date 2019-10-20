@@ -10,30 +10,32 @@ paths:
           type: string
     get:
       description: Returns recent entries for a specified journal, optionally filtered by the extra parameters given.
-      requestBody:
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                start:
-                  type: string
-                  description: The beginning of a date range to fetch.
-                end:
-                  type: string
-                  description: The end of a date range to fetch.
-                count:
-                  type: integer
-                  description: The number of entries to fetch. FIXME - max
-                offset:
-                  type: integer
-                  description: The offset from the most recent entry to start fetching from.
-                tag:
-                  type: string
-                  description: The tag to filter fetched entries by
-                accesslist:
-                  type: string
-                  description: The security level to filter fetched entries by
+      parameters:
+        - name: count
+          in: query
+          description: The number of entries to fetch. FIXME - max
+          schema:
+            type: integer
+        - name: offset
+          in: query
+          description: The offset from the most recent entry to start fetching from.
+          schema:
+            type: integer
+        - name: tag
+          in: query
+          description: The tag to filter fetched entries by
+          schema:
+            type: string
+        - name: poster
+          in: query
+          description: The poster to filter fetched entries by (only valid if journal is a community)
+          schema:
+            type: string
+        - name: security
+          in: query
+          description: The security level to filter fetched entries by
+          schema:
+            type: string
       responses:
         200:
           description: a list of recent entries

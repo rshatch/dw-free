@@ -69,7 +69,7 @@ sub new_entry {
    
     my $post = $args->{body};
 
-    return $self->rest_error( 'GET', 404 ) unless $usejournal;
+    return $self->rest_error( '404' ) unless $usejournal;
 
         # these kinds of errors prevent us from initializing the form at all
     # so abort and return it without the form
@@ -132,7 +132,7 @@ sub new_entry {
         return $post_res{render} if $post_res{status} eq "ok";
 
         # oops errors when posting: show error, fall through to show form
-        return $self->rest_error( 'POST', 500, $post_res{errors} ) if $post_res{errors};
+        return $self->rest_error( '500', $post_res{errors} ) if $post_res{errors};
 
 
 
@@ -368,12 +368,11 @@ sub _do_post {
 
 sub rest_get {
     my ( $self, $args) = @_;
-
-    my $journal = LJ::load_user( $args->{path}{username} );
+    my $journal = LJ::load_user( $args->{path}{journal} );
     my $remote = $args->{user};
    
     my $ditemid = $args->{path}{entry_id};
-    my $opts = $args->{body};
+    my $opts = $args->{query};
 
     return $self->rest_error( '404' ) unless $journal;
 
@@ -387,25 +386,47 @@ sub rest_get {
 
     } else {
     
-        my $skip = 0;
+        my $skip = $opts->{offset} ? $opts->{offset} : 0;
        
-        my $itemshow = 25;
+        my $itemshow = $opts->{count} ? $opts->{count} : 25;
+        my $poster;
+        my @items = ();
+
+        # a non-existant poster can never have posted entries, so return an empty list.
+        # necessary because an undef posterid removes that filter, returning all an unfiltered entry list
+        # which is not the expected behavior.
+        if ($opts->{poster} && $journal->is_community ) {
+            $poster = LJ::load_user( $opts->{poster} );
+            return $self->rest_ok( \@items ) unless $poster;
+        }
+
+        my @tags = ();
+        if (defined($opts->{tag})) {
+            my $usertags = LJ::Tags::get_usertags( $journal, { remote => $remote } );
+            foreach my $tag (keys %{$usertags}) {
+                if ($usertags->{$tag}{name} eq $opts->{tag}) {
+                    push @tags, $tag;
+                }
+            }
+            return $self->rest_ok( \@items ) unless @tags > 0; # a non-existant tag can't have entries, either.
+        }
+
         my @itemids;
         my $err;
-        my @items = $journal->recent_items(
+        @items = $journal->recent_items(
             clusterid     => $journal->{clusterid},
             clustersource => 'slave',
             remote        => $remote,
-            itemshow      => $itemshow + 1,
+            itemshow      => $itemshow,
             skip          => $skip,
-            tagids        => [],
+            tagids        => \@tags,
             tagmode       => $opts->{tagmode},
-            security      => $opts->{securityfilter},
+            security      => $opts->{security},
             itemids       => \@itemids,
             dateformat    => 'S2',
             order         => $journal->is_community ? 'logtime' : '',
             err           => \$err,
-            posterid      => undef,
+            posterid      => $journal->is_community && $poster ? $poster->id : undef,
             );
 
         foreach my $it ( @items ) {
