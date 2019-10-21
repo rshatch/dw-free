@@ -22,6 +22,7 @@ use DW::Routing;
 use DW::Request;
 use DW::Controller;
 use JSON;
+use Data::Dumper;
 
 ################################################
 # /journals/{journal}/entries
@@ -64,7 +65,7 @@ my @modules = qw(
 sub new_entry {
     my ( $self, $args) = @_;
 
-    my $usejournal = LJ::load_user( $args->{path}{username} );
+    my $usejournal = LJ::load_user( $args->{path}{journal} );
     my $remote = $args->{user};
    
     my $post = $args->{body};
@@ -129,7 +130,7 @@ sub new_entry {
 
         # if we didn't have any errors with decoding the form, proceed to post
         my %post_res = _do_post( $form_req, $flags, \%auth);
-        return $post_res{render} if $post_res{status} eq "ok";
+        return $self->rest_ok( \%post_res ) if $post_res{status} eq "ok";
 
         # oops errors when posting: show error, fall through to show form
         return $self->rest_error( '500', $post_res{errors} ) if $post_res{errors};
@@ -381,8 +382,21 @@ sub rest_get {
         return $self->rest_error('404') unless $item;
 
         return $self->rest_error('403') unless $item->visible_to($remote);
+
+        # load the rest of our data
+        my $entry = {};
+        $entry->{subject} = $item->subject_html();
+        $entry->{text} = $item->event_html(0);
+        $entry->{poster} = $item->{'u'}{name};
+        $entry->{url} = $item->url();
+        $entry->{security} = $item->security();
+        my @entry_tags = $item->tags();
+        $entry->{tags} = (\@entry_tags);
+        $entry->{icon} = $item->userpic() || '';
+        $entry->{entry_id} = delete $item->{ditemid};
+        #$item->{metadata} = $item->currents;
     
-        return $self->rest_ok( $item );
+        return $self->rest_ok( $entry );
 
     } else {
     
@@ -439,6 +453,8 @@ sub rest_get {
             $it->{poster} = $poster->{user};
             delete $it->{alldatepart};
             delete $it->{system_alldatepart};
+
+            $it->{server_time} = delete $it->{'logtime'};
         }
         return $self->rest_ok( \@items );
     }
@@ -454,7 +470,7 @@ sub edit_entry {
 
     my ( $self, $args) = @_;
 
-    my $usejournal = LJ::load_user( $args->{path}{username} );
+    my $usejournal = LJ::load_user( $args->{path}{journal} );
     my $ditemid = $args->{path}{entry_id};
     my $remote = $args->{user};
    

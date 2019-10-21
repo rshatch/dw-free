@@ -116,8 +116,10 @@ For this API, users are identified with an API key rather than a username and pa
 	[% FOREACH param = method.params.list('values') %]
 		[% PROCESS print_form name = param.name, type = param.schema.type, location = param.in %]
 	[% END %]
-	[% FOREACH param = json.properties %]
-		[% PROCESS print_form name = param.key, type = param.value.type, location = 'body' %]
+	[% IF method.requestBody %]
+		[% FOREACH param = json.properties %]
+			[% PROCESS print_form name = param.key, type = param.value.type, location = 'body' %]
+		[% END %]
 	[% END %]
 	<input type="submit" class="button" value="[% method.name.upper %]">
 	<div class="request hide"></div>
