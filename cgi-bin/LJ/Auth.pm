@@ -170,9 +170,11 @@ sub auth_okay {
         return 0;
     };
 
-    ## LJ default authorization:
-    return 1 if $password eq $u->password;
-    return $bad_login->();
+    if (LJ::User::check_password($u, $password)) {
+        return 1;
+    } else {
+        return $bad_login->();
+    }
 }
 
 # Validate a challenge string previously supplied by challenge_generate

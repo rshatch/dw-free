@@ -1,6 +1,8 @@
 Business::CreditCard
 CGI::Cookie
 Cache::Memcached
+Authen::Passphrase::Clear
+Authen::Passphrase::BlowfishCrypt
 Captcha::reCAPTCHA@0.99
 Class::Autouse
 Class::Data::Inheritable

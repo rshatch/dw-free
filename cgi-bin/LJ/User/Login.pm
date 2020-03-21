@@ -16,6 +16,8 @@ use strict;
 no warnings 'uninitialized';
 
 use LJ::Session;
+use Authen::Passphrase::Clear;
+use Authen::Passphrase::BlowfishCrypt;
 
 ########################################################################
 ### 4. Login, Session, and Rename Functions
@@ -332,12 +334,15 @@ sub password {
     my $u = shift;
     return unless $u->is_person;
     my $userid = $u->userid;
+    my $rev;
     $u->{_password} ||= LJ::MemCache::get_or_set(
         [ $userid, "pw:$userid" ],
         sub {
             my $dbh = LJ::get_db_writer() or die "Couldn't get db master";
-            return $dbh->selectrow_array( "SELECT password FROM password WHERE userid=?",
+            my @pw_data = $dbh->selectrow_array( "SELECT password, rev FROM password WHERE userid=?",
                 undef, $userid );
+            
+            return join(":", @pw_data);
         }
     );
     return $u->{_password};
@@ -347,17 +352,31 @@ sub set_password {
     my ( $u, $password ) = @_;
     my $userid = $u->id;
 
+    my $crypt = Authen::Passphrase::BlowfishCrypt->new(cost => 14, salt_random => 1, passphrase => $password);
     my $dbh = LJ::get_db_writer();
-    if ( $LJ::DEBUG{'write_passwords_to_user_table'} ) {
-        $dbh->do( "UPDATE user SET password=? WHERE userid=?", undef, $password, $userid );
-    }
-    $dbh->do( "REPLACE INTO password (userid, password) VALUES (?, ?)", undef, $userid, $password );
+
+    $dbh->do( "REPLACE INTO password (userid, password, rev) VALUES (?, ?, ?)", undef, $userid, $crypt->as_crypt, 1 );
 
     # update caches
     LJ::memcache_kill( $userid, "userid" );
     $u->memc_delete('pw');
     my $cache = $LJ::REQ_CACHE_USER_ID{$userid} or return;
     $cache->{'_password'} = $password;
+}
+
+sub check_password {
+    my ($u, $password) = @_;
+    my ($pw, $rev) = split(":", $u->password);
+    my $crypt;
+
+    if ($rev == 1) {
+        $crypt = Authen::Passphrase::BlowfishCrypt->from_crypt($pw);
+    } else {
+        $crypt = Authen::Passphrase::Clear->new($pw);
+        set_password($u, $password);
+    }
+    
+    return $crypt->match($password);
 }
 
 ########################################################################
