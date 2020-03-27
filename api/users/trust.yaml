@@ -7,12 +7,17 @@ paths:
         description: The journal you want entry information for
         required: true
         schema:
-          type: string    
+          type: string
+          minLength: 3
+          maxLength: 25
+          pattern: "^[0-9A-Za-z_]+$"        
     get:
       description: Returns a list of journals the username grants read access to.
       responses:
         200:
           description: A list of journal names.
+        404:
+          description: No user found.
     post:
       description: Grant read access to journals in the `journals` list.
       requestBody:
@@ -28,6 +33,9 @@ paths:
                   type: array
                   items:
                     type: string
+                    minLength: 3
+                    maxLength: 25
+                    pattern: "^[0-9A-Za-z_]+$"    
       responses:
         200:
           description: A list of journal names.
@@ -35,21 +43,21 @@ paths:
           description: You can't grant access for that username.
         404:
           description: No user found.
+        400:
+          description: Invalid parameters
     delete:
       description: Remove read access to journals in the `journals` list.
-      requestBody:
-        content:
-          application/json:
-            schema:
-              type: object
-              required:
-              - journals
-              properties:
-                journal:
-                  description: journals to remove
-                  type: array
-                  items:
-                    type: string 
+      parameters:
+        - name: journals
+          in: query
+          description: journals to remove
+          schema:
+            type: array
+            items:
+              type: string
+              minLength: 3
+              maxLength: 25
+              pattern: "^[0-9A-Za-z_]+$"     
       responses:
         200:
           description: A list of journal names.
@@ -57,3 +65,5 @@ paths:
           description: You can't remove access for that username.
         404:
           description: No user found.
+        400:
+          description: Invalid parameters

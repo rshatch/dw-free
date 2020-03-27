@@ -369,15 +369,14 @@ sub _do_post {
 
 sub rest_get {
     my ( $self, $args) = @_;
-    my $journal = LJ::load_user( $args->{path}{journal} );
+    my $journal = LJ::load_user( $args->{path}{username} );
     my $remote = $args->{user};
-   
     my $ditemid = $args->{path}{entry_id};
     my $opts = $args->{query};
 
     return $self->rest_error( '404' ) unless $journal;
 
-    if ($ditemid ne "") {
+    if (defined $ditemid && $ditemid ne "") {
         my $item = LJ::Entry->new($journal, ditemid => $ditemid);
         return $self->rest_error('404') unless $item;
 
@@ -477,6 +476,7 @@ sub edit_entry {
     my $post = $args->{body};
 
     return $self->rest_error('401') unless $remote;
+    return $self->rest_error('404') unless $usejournal;
 
 
         # we can always trust this value:

@@ -44,39 +44,39 @@ sub new_item {
     my ( $class, $obj ) = @_;
     return unless $obj && ref $obj;
 
-    # entries are [ journalid, jitemid ] which lets us get the LJ::Entry back
-    if ( $obj->isa('LJ::Entry') ) {
-        return
-            unless $obj->journal->is_community
-            || $obj->journal->is_individual;
+    # # entries are [ journalid, jitemid ] which lets us get the LJ::Entry back
+    # if ( $obj->isa('LJ::Entry') ) {
+    #     return
+    #         unless $obj->journal->is_community
+    #         || $obj->journal->is_individual;
 
-        DW::TaskQueue->dispatch(
-            TheSchwartz::Job->new_from_array(
-                'DW::Worker::LatestFeed',
-                {
-                    type      => 'entry',
-                    journalid => $obj->journalid,
-                    jitemid   => $obj->jitemid,
-                }
-            )
-        );
+    #     DW::TaskQueue->dispatch(
+    #         TheSchwartz::Job->new_from_array(
+    #             'DW::Worker::LatestFeed',
+    #             {
+    #                 type      => 'entry',
+    #                 journalid => $obj->journalid,
+    #                 jitemid   => $obj->jitemid,
+    #             }
+    #         )
+    #     );
 
-        # comments are stored as [ journalid, jtalkid ] which allows us to rebuild
-        # the object easily
-    }
-    elsif ( $obj->isa('LJ::Comment') ) {
-        DW::TaskQueue->dispatch(
-            TheSchwartz::Job->new_from_array(
-                'DW::Worker::LatestFeed',
-                {
-                    type      => 'comment',
-                    journalid => $obj->journalid,
-                    jtalkid   => $obj->jtalkid,
-                }
-            )
-        );
+    #     # comments are stored as [ journalid, jtalkid ] which allows us to rebuild
+    #     # the object easily
+    # }
+    # elsif ( $obj->isa('LJ::Comment') ) {
+    #     DW::TaskQueue->dispatch(
+    #         TheSchwartz::Job->new_from_array(
+    #             'DW::Worker::LatestFeed',
+    #             {
+    #                 type      => 'comment',
+    #                 journalid => $obj->journalid,
+    #                 jtalkid   => $obj->jtalkid,
+    #             }
+    #         )
+    #     );
 
-    }
+    # }
 
     return undef;
 }

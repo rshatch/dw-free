@@ -1,14 +1,17 @@
 ---
 paths:
-  /journals/{journal}/entries/defaults:
+  /journals/{username}/entries/defaults:
     parameters:
-      - name: journal
+      - name: username
         in: path
         description: The journal you want entry information for
         type: string
         required: true
         schema:
           type: string
+          minLength: 3
+          maxLength: 25
+          pattern: "^[0-9A-Za-z_]+$"    
     get:
       description: Returns the default entry posting values
       responses:

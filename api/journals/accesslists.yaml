@@ -8,6 +8,9 @@ paths:
         required: true
         schema:
           type: string
+          minLength: 3
+          maxLength: 25
+          pattern: "^[0-9A-Za-z_]+$"    
       - name: accesslistid
         in: path
         description: The id of the accesslist you want information for.
@@ -19,6 +22,12 @@ paths:
       responses:
         200:
           description: A list of journals.
+        403:
+          description: You cannot view accesslists on that journal.
+        404:
+          description: No user found.
+        400:
+          description: Missing or invalid parameters.  
     post:
       description: Add users to a given accesslist
       requestBody:
@@ -29,8 +38,15 @@ paths:
               type: array
               items: 
                 type: string
+                minLength: 3
+                maxLength: 25
+                pattern: "^[0-9A-Za-z_]+$"    
       responses:
         200:
           description: The newly updated accesslist.
         403:
           description: You cannot update accesslists on that journal.
+        404:
+          description: No user found.
+        400:
+          description: Missing or invalid parameters.  

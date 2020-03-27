@@ -8,11 +8,18 @@ paths:
         required: true
         schema:
           type: string
+          minLength: 3
+          maxLength: 25
+          pattern: "^[0-9A-Za-z_]+$"    
     get:
       description: Returns a list of entry accesslists for the journal
       responses:
         200:
           description: A list of accesslists.
+        403:
+          description: You cannot view accesslists on that journal.
+        404:
+          description: No such user.
     post:
       description: Create a new entry accesslist for the journal
       requestBody:
@@ -26,6 +33,7 @@ paths:
                 name:
                   description: The name of the new accesslist.
                   type: string
+                  minLength: 1
                 sortorder:
                   description: Sort order for the new accesslist, 0 to 255.
                   type: integer
@@ -39,3 +47,7 @@ paths:
           description: The newly created accesslist.
         403:
           description: You cannot create accesslists on that journal.
+        400:
+          description: Missing or invalid parameter
+        404:
+          description: No such user.

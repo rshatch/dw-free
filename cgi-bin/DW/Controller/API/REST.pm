@@ -147,12 +147,14 @@ sub _dispatcher {
 
     my $r      = $rv->{r};
     my $keystr = $r->header_in('Authorization');
-    $keystr =~ s/Bearer (\w+)/$1/;
-    my $apikey = DW::API::Key->get_key($keystr);
-    warn Dumper($r->json);
+    my $apikey;
+    if (defined($keystr) ){
+        $keystr =~ s/Bearer (\w+)/$1/;
+        $apikey = DW::API::Key->get_key($keystr);
+    }
 
 # all paths require an API key except the spec (which informs users that they need a key and where to put it)
-    unless ( $apikey || $self->{path}{name} eq "/spec" ) {
+    unless ( defined($apikey) || $self->{path}{name} eq "/spec" ) {
         $r->print( to_json( { success => 0, error => "Missing or invalid API key" } ) );
         $r->status('401');
         return;
@@ -174,24 +176,24 @@ sub _dispatcher {
         my $valid = _validate_param( $param, $self->{path}{params}{$param}, $r, $path_params, $args );
         return unless $valid;
     }
-    warn "passed path-level validation";
     my $method      = lc $r->method;
     my $handler     = $self->{path}{methods}->{$method}->{handler};
     my $method_self = $self->{path}{methods}->{$method};
+
+    if ($method eq 'delete') {
+        print "Hit a delete method";
+    }
 
     # check method-level parameters
     for my $param ( keys %{ $method_self->{params} } ) {
         my $valid = _validate_param( $param, $method_self->{params}{$param}, $r, undef, $args );
         return unless $valid;
     }
-
-    warn "passed method-level validation";
     # if we accept a request body, validate that too.
     if ( defined $method_self->{requestBody} ) {
         my $valid = _validate_body( $method_self->{requestBody}, $r, $args );
         return unless $valid;
     }
-    warn "passed request body validation";
     # some handlers need to know what version they are
     $method_self->{ver} = $self->{ver};
 
@@ -221,7 +223,6 @@ sub _validate_param {
     my $ploc = $config->{in};
     my $preq = $config->{required};
     my $pval = $config->{validator};
-    warn Dumper($config);
     my $p;
 
     if ( $ploc eq 'query' ) {
@@ -295,6 +296,8 @@ sub _validate_body {
             $upload_hash->add( $item->{name} => $item->{body} );
         }
         $p = $upload_hash;
+    } else {
+        print "content-type is $content_type";
     }
 
     # make sure that required parameters are supplied
@@ -307,6 +310,10 @@ sub _validate_body {
         }
     }
 
+    # non-required parameters may be undef without it being an error
+    # but we shouldn't try to validate them if they're undef.
+    return 1 unless ( defined $p && defined($config->{content}->{$content_type}{validator}));
+
     # run the schema validator
     my @errors = $config->{content}->{$content_type}{validator}->validate($p);
     if (@errors) {
@@ -316,8 +323,8 @@ sub _validate_body {
         $r->status('400');
         return 0;
     }
-
     $arg_obj->{body} = $p;
+    
     return 1;
 }
 

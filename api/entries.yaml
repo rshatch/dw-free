@@ -1,13 +1,16 @@
 ---
 paths:
-  /journals/{journal}/entries/{entry_id}:
+  /journals/{username}/entries/{entry_id}:
     parameters:
-      - name: journal
+      - name: username
         in: path
         description: The journal you want entry information for
         required: true
         schema:
           type: string
+          minLength: 3
+          maxLength: 25
+          pattern: "^[0-9A-Za-z_]+$"  
       - name: entry_id
         in: path
         description: The entry id you want information for
@@ -39,6 +42,7 @@ paths:
                 text:
                   type: string
                   description: Entry text
+                  minLength: 1
                 icon:
                   type: string
                   description: Keyword of icon to use

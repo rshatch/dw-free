@@ -7,7 +7,10 @@ paths:
         description: The journal you want entry information for
         required: true
         schema:
-          type: string    
+          type: string
+          minLength: 3
+          maxLength: 25
+          pattern: "^[0-9A-Za-z_]+$"      
     get:
       description: Returns information about a specific user.
       responses:

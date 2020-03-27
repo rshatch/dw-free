@@ -20,6 +20,7 @@ package DW::API::Parameter;
 use strict;
 use warnings;
 use JSON;
+use Data::Dumper;
 
 use Carp qw(croak);
 
@@ -103,8 +104,11 @@ sub TO_JSON {
         in          => $self->{in},
     };
 
+    # Schema fields we need to force to be numeric
+    
     if ( defined $self->{schema} ) {
         $json->{schema} = $self->{schema};
+        force_numeric($json->{schema});
     }
     elsif ( defined $self->{content} ) {
         $json->{content} = $self->{content};
@@ -112,6 +116,7 @@ sub TO_JSON {
         # content type is just a hash, but we don't want to print the validator too
         for my $content_type ( keys %{ $json->{content} } ) {
             delete $json->{content}->{$content_type}{validator};
+            force_numeric($json->{content}->{$content_type}{schema});
         }
     }
 
@@ -125,6 +130,23 @@ sub TO_JSON {
     $json->{required} = $JSON::true if defined $self->{required} && $self->{required};
     return $json;
 
+}
+
+sub force_numeric {
+    my $schema = $_[0];
+    my @numerics = ('minLength', 'maxLength', 'minimum', 'maximum', 'minItems', 'maxItems');
+
+    if ($schema->{type} eq 'object') {
+        for my $prop (keys %{ $schema->{properties} }) {
+            force_numeric($schema->{properties}{$prop});
+        }
+    } elsif ($schema->{type} eq 'array') {
+        force_numeric($schema->{items});
+    } else {
+        foreach my $item (@numerics) {
+            $schema->{$item} += 0 if defined($schema->{$item});
+        }
+    }
 }
 
 1;
