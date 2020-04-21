@@ -3743,6 +3743,15 @@ q{ALTER TABLE shop_carts ADD COLUMN nextscan INT UNSIGNED NOT NULL DEFAULT 0 AFT
                 q{ALTER TABLE import_data ADD COLUMN usejournal VARCHAR(255) AFTER username} );
         }
 
+        unless ( column_type( 'password', 'rev' ) ) {
+            do_alter( 'password',
+                q{ALTER TABLE password ADD COLUMN rev INT(3) AFTER password} );
+            do_alter('password',
+                q{ALTER TABLE password MODIFY COLUMN password VARCHAR(60)} );
+            do_alter('user',
+                q{ALTER TABLE user MODIFY COLUMN password VARCHAR(60)} );
+        }
+
      # FIXME: This should be moved into a maint script or something,
      #   but if someone ever does remove the " 0 && " from here, this whole body needs to be wrapped
      #   in a do_code block ( To prevent the warning message from delaying things )

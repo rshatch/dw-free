@@ -117,7 +117,7 @@ sub verify_password {
 
     # no more than 30 characters
     return LJ::Lang::ml('widget.createaccount.error.password.toolong')
-        if length $password > 30;
+        if length $password > 72;
 
     # only ascii characters
     return LJ::Lang::ml('widget.createaccount.error.password.asciionly')

@@ -180,7 +180,7 @@ _c?>
         $auth .= "<p class='pkg'>\n";
         $auth .= "<label for='altlogin_password' class='left'>$ML{'.password'}</label>\n";
         $auth .= LJ::html_text({ 'type' => 'password', 'id' => 'altlogin_password', 'class' => 'text',
-                'name' => 'password', 'tabindex' => '6', 'size' => '15', 'maxlength' => '30' }) . "\n";
+                'name' => 'password', 'tabindex' => '6', 'size' => '15', 'maxlength' => '72' }) . "\n";
         # posted with a user, but no password
         if ($did_post && $auth_missing) {
             $auth .= "<br /><?inerr $ML{'.error.nopass'} inerr?>";
@@ -291,11 +291,7 @@ _c?>
             $u = LJ::load_user($user);
 
             # Verify entered password, if it is present.
-            my $ok;
-            my $hashed_password = $POST{response} ||
-                                    # js disabled, fallback to plaintext
-                                    Digest::MD5::md5_hex($POST{chal} . Digest::MD5::md5_hex($POST{password}));
-            $ok = LJ::challenge_check_login($u, $POST{chal}, $hashed_password);
+            my $ok = LJ::auth_okay($u, $POST{password});
             $flags = { 'noauth' => 1, 'u' => $u } if $ok;
 
         } elsif ($remote && LJ::check_referer()) {

@@ -17,7 +17,7 @@ use strict;
 use base qw(LJ::Widget);
 use Carp qw(croak);
 
-sub need_res { qw( stc/widgets/login.css js/md5.js js/login.js) }
+sub need_res { qw( stc/widgets/login.css) }
 
 sub render_body {
     my $class = shift;
@@ -49,10 +49,6 @@ sub render_body {
     $form_class = "lj_login_form pkg" unless $form_class;
     $ret .= "<form action='$LJ::SITEROOT/login$getextra' method='post' class='$form_class'>\n";
     $ret .= LJ::form_auth();
-
-    my $chal = LJ::challenge_generate(300);    # 5 minute auth token
-    $ret .= "<input type='hidden' name='chal' class='lj_login_chal' value='$chal' />\n";
-    $ret .= "<input type='hidden' name='response' class='lj_login_response' value='' />\n";
 
     my $referer = BML::get_client_header('Referer');
     my $eh_ref;
@@ -100,7 +96,7 @@ sub render_body {
             . LJ::Lang::ml('/login.bml.login.password')
             . "</label>\n";
         $ret .=
-"<input type='password' id='lj_loginwidget_password' name='password' class='lj_login_password text' size='20' maxlength='30' tabindex='12' /><a href='$LJ::SITEROOT/lostinfo' class='small-link' tabindex='16'>"
+"<input type='password' id='lj_loginwidget_password' name='password' class='lj_login_password text' size='20' maxlength='72' tabindex='12' /><a href='$LJ::SITEROOT/lostinfo' class='small-link' tabindex='16'>"
             . LJ::Lang::ml('/login.bml.login.forget2')
             . "</a>\n";
         $ret .= "</fieldset>\n";
