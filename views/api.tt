@@ -53,17 +53,18 @@ For this API, users are identified with an API key rather than a username and pa
 	[% FOREACH method = methods.values %]
 	<h4>[% method.name.upper %] - [% method.desc %]</h4>
 
-	[% IF method.params.size > 0 %]
+	[% IF method.params %]
 	<h5>Request Format</h5>
 		[% PROCESS display_params params = method.params.list('values') %]
 	[% END %]
 
 	[% IF method.requestBody %]
 	<h5>Request Format</h5>
-		[% FOREACH ct = method.requestBody.content %]
+		[% FOREACH ct = method.requestBody %]
 		Content-type accepted: [% ct.key %]
-		[% IF ct.value.schema.size > 0 %]
+		[% IF ct.value.schema %]
 			[% PROCESS display_json json = ct.value.schema %]
+			[% PROCESS try_it json = ct.value.schema %]
 		[% END %]
 		[% END %]
 	[% END %]
@@ -73,7 +74,7 @@ For this API, users are identified with an API key rather than a username and pa
 		<h6>[% resp.key %]</h6>
 		[% resp.value.desc %]
 	[% END %]
-	[% PROCESS try_it json = ct.value.schema %]
+	[% PROCESS try_it UNLESS method.requestBody %]
 	[% END %]
 [% END %]
 
