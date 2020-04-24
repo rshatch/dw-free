@@ -51,9 +51,25 @@ sub define_parameter {
     }
 
     bless $parameter, $class;
-    $parameter->_validate;
+    $parameter->_validate_json;
     return $parameter;
 
+}
+
+sub define_body {
+    my ( $class, $args, $content ) = @_;
+    my $parameter = {
+        in       => 'requestBody',
+    };
+
+    if ( defined $args->{schema} ) {
+        $parameter->{schema} = $args->{schema};
+    }
+    bless $parameter, $class;
+    if ($content eq 'application/json') {
+        $parameter->_validate_json;
+        return $parameter;
+    }
 }
 
 # Usage: validate ( Parameter object )
@@ -61,7 +77,7 @@ sub define_parameter {
 # Makes sure required fields are present, and that the
 # location given is a valid one.
 
-sub _validate {
+sub _validate_json {
     my $self = $_[0];
     # for my $field (@REQ_ATTRIBUTES) {
     #     croak "$self is missing required field $field" unless defined $self->{$field};
@@ -74,13 +90,6 @@ sub _validate {
 
     croak "Can only define one of content or schema!" if $has_schema && $has_content;
     croak "Must define at least one of content or schema!" unless $has_content || $has_schema;
-
-    # requestBody is a special instance of Parameter and has stricter rules
-    if ( $location eq "requestBody" ) {
-        if ( not defined( keys %{ $self->{content} } ) ) {
-            croak "requestBody must have at least one content-type!";
-        }
-    }
 
     # Run schema validators
     DW::Controller::API::REST::schema($self) if ( defined $self->{schema} );

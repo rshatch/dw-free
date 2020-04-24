@@ -65,7 +65,7 @@ my @modules = qw(
 sub new_entry {
     my ( $self, $args) = @_;
 
-    my $usejournal = LJ::load_user( $args->{path}{journal} );
+    my $usejournal = LJ::load_user( $args->{path}{username} );
     my $remote = $args->{user};
    
     my $post = $args->{body};
@@ -469,7 +469,7 @@ sub edit_entry {
 
     my ( $self, $args) = @_;
 
-    my $usejournal = LJ::load_user( $args->{path}{journal} );
+    my $usejournal = LJ::load_user( $args->{path}{username} );
     my $ditemid = $args->{path}{entry_id};
     my $remote = $args->{user};
    

@@ -276,7 +276,6 @@ sub _validate_param {
 
 sub _validate_body {
     my ( $config, $r, $arg_obj ) = @_;
-
     my $preq         = $config->{required};
     my $content_type = lc $r->header_in('Content-Type');
     my $p;
@@ -297,7 +296,7 @@ sub _validate_body {
         }
         $p = $upload_hash;
     } else {
-        print "content-type is $content_type";
+        warn "Unexpected content-type $content_type";
     }
 
     # make sure that required parameters are supplied
@@ -312,10 +311,10 @@ sub _validate_body {
 
     # non-required parameters may be undef without it being an error
     # but we shouldn't try to validate them if they're undef.
-    return 1 unless ( defined $p && defined($config->{content}->{$content_type}{validator}));
+    #return 1 unless ( defined $p && defined($config->{content}->{$content_type}{validator}));
 
     # run the schema validator
-    my @errors = $config->{content}->{$content_type}{validator}->validate($p);
+    my @errors = $config->{$content_type}{validator}->validate($p);
     if (@errors) {
         my $err_str = join( ', ', map { $_->{message} } @errors );
         $r->print(

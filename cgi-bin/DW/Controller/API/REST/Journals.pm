@@ -61,7 +61,7 @@ sub accesslists_new {
 
     my $body = $args->{body};
 
-    my $group = $user->create_trust_group(name => $body->{name}, sortorder => $body->{sortorder}, is_public => $body->{is_public});
+    my $group = $user->create_trust_group(groupname => $body->{name}, sortorder => $body->{sortorder}, is_public => $body->{is_public});
 
     return $self->rest_ok( $group );
     }
@@ -177,7 +177,7 @@ sub tags_post {
 
 sub tags_delete {
     my ( $self, $args) = @_;
-    print "hit tags_delete";
+
     my $user = LJ::load_user( $args->{path}{username} );
     my $remote = $args->{user};
     return $self->rest_error( "404" ) unless $user;
