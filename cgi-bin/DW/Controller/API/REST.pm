@@ -314,6 +314,7 @@ sub _validate_body {
     #return 1 unless ( defined $p && defined($config->{content}->{$content_type}{validator}));
 
     # run the schema validator
+    warn Dumper($p);
     my @errors = $config->{$content_type}{validator}->validate($p);
     if (@errors) {
         my $err_str = join( ', ', map { $_->{message} } @errors );
@@ -322,6 +323,7 @@ sub _validate_body {
         $r->status('400');
         return 0;
     }
+    warn Dumper($p);
     $arg_obj->{body} = $p;
     
     return 1;

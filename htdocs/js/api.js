@@ -7,18 +7,29 @@ form = $(event.target);
 
 path = form.children('input[name=path]').val();
 method = form.children('input[name=method]').val();
-console.log(method);
 
 var pathvars = form.children('input[data-location=path]').serializeArray();
 var queryvars = form.children('input[data-location=query]').serialize();
 var requestbody = {};
 form.children('input[data-location=body]').each(function(index, item){
 	if (item.value !== '') {
-	requestbody[item.name] = item.value;
+	console.log(item.getAttribute('data-type'));
+        if (item.getAttribute("data-type") == "integer") {
+            console.log(item.value);
+            var num = new Number(item.value)
+            console.log(num);
+            requestbody[item.name] = num.valueOf();
+        }
+        if (item.getAttribute("data-type") == "boolean") {
+            console.log(item.value);
+            requestbody[item.name] = (item.value == "true");
+        }
+        else {
+            requestbody[item.name] = item.value;
+        }
 	}
 });
 
-console.log(queryvars);
 $.each(pathvars, function(index, item) {
 	var re = new RegExp('{' + item.name + '}');
 	path = path.replace(re, item.value);
@@ -36,10 +47,15 @@ var ajax_settings = {
 	type: method,
 	success: function(data) {
 		resp.html('<pre>' + JSON.stringify(data, null, '\t') + '</pre>');
-		resp.removeClass('hide').addClass('panel');
+		resp.removeClass('hide').addClass('alert-box success');
+	},
+    error: function(XHR, status, error) {
+		resp.html('<pre>' + status + '\n' + error + '</pre>');
+		resp.removeClass('hide').addClass('alert-box alert');
 	}
 }
 
+console.log(requestbody);
 if (! $.isEmptyObject(requestbody)) {
 	ajax_settings.data = JSON.stringify(requestbody)
 }

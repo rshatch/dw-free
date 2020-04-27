@@ -40,9 +40,7 @@ sub work {
         $msg =~ s/\r?\n/ /gs;
         return $class->temp_fail( $data, 'lj_entries', $job, 'Failure running job: %s', $msg );
     }
-
-    # FIXME: temporary hack to reclaim memory when we have imported entries
-    exit 0;
+    
 }
 
 sub try_work {

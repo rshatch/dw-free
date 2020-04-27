@@ -44,7 +44,7 @@ paths:
                   type: boolean
       responses:
         200:
-          description: The newly created accesslist.
+          description: The id of the newly created accesslist.
         403:
           description: You cannot create accesslists on that journal.
         400:
