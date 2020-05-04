@@ -18,3 +18,5 @@ paths:
           description: An array of user information.
         404:
           description: No such journal.
+        400:
+          description: Missing or invalid request parameters.

@@ -22,6 +22,7 @@ use DW::Routing;
 use DW::Request;
 use DW::Controller;
 use JSON;
+use Data::Dumper;
 
 ################################################
 # /journals/{journal}/accesslists
@@ -29,7 +30,7 @@ use JSON;
 # Get a list of accesslists, or create a new accesslist
 ################################################
 
-my $accesslists_all = DW::Controller::API::REST->path('journals/accesslists_all.yaml', 1, { get => \&accesslists_get, post => \&accesslists_new});
+my $accesslists_all = DW::Controller::API::REST->path('journals/accesslists_all.yaml', 1, { get => \&accesslists_get, post => \&accesslists_new, delete => \&accesslists_delete});
 
 sub accesslists_get {
     my ( $self, $args) = @_;
@@ -64,6 +65,21 @@ sub accesslists_new {
     $body->{sortorder} ||= 0;
 
     my $group = $user->create_trust_group(groupname => $body->{name}, sortorder => $body->{sortorder}, is_public => $body->{is_public});
+
+    return $self->rest_ok( $group );
+    }
+
+sub accesslists_delete {
+    my ( $self, $args) = @_;
+
+    my $user = LJ::load_user( $args->{path}{username} );
+    my $remote = $args->{user};
+    return $self->rest_error( "404" ) unless $user;
+    return $self->rest_error( "403" ) unless $user == $remote;
+
+    my $id = $args->{query}{id};
+
+    my $group = $user->delete_trust_group({id => $id});
 
     return $self->rest_ok( $group );
     }
@@ -126,6 +142,32 @@ sub accesslist_edit {
     return $self->rest_ok( "added successfully" );
     }
 
+sub accesslist_delete {
+    my ( $self, $args) = @_;
+
+    my $user = LJ::load_user( $args->{path}{username} );
+    my $remote = $args->{user};
+    return $self->rest_error( "404" ) unless $user;
+    return $self->rest_error( "403" ) unless $user == $remote;
+
+    my $journals = $args->{query}{journal};
+    my $id = $args->{path}{accesslistid};
+
+    my $trust_group = $user->trust_groups({id => $id});
+    my $groupmask = $trust_group->{groupmask};
+
+    foreach my $journal (@{$journals}) {
+        my $trusted_u = LJ::load_user( $journal );
+        # User might have been removed from circle between load and
+        # submit; don't re-add.
+        next unless $trusted_u && $user->trusts( $trusted_u );
+            $user->add_edge( $trusted_u, trust => {
+                mask => $groupmask,
+                nonotify => 1,
+                } );
+        }
+    return $self->rest_ok( "added successfully" );
+    }
 ################################################
 # /journals/{journal}/tags
 #
@@ -147,7 +189,11 @@ sub tags_get {
     foreach my $kwid (keys %{$tags}) {
         # only show tags for display
         next unless $tags->{$kwid}->{display};
-        push @taglist, LJ::S2::TagDetail($user, $kwid => $tags->{$kwid});
+        my $tag = LJ::S2::TagDetail($user, $kwid => $tags->{$kwid});
+        # delete some fields the enduser doesn't need
+        delete $tag->{_type};
+        delete $tag->{_id};
+        push @taglist, $tag;
     }
     @taglist = sort { $a->{name} cmp $b->{name} } @taglist;
 
@@ -165,7 +211,7 @@ sub tags_post {
     my $tagerr = "";
     my @errors;
 
-    my $tags = $args->{body}{tags};
+    my $tags = $args->{body};
     #push the usernames for all comms the user has posting access to onto the list.
     foreach my $tag ( @{$tags} ) {
 
@@ -185,15 +231,11 @@ sub tags_delete {
     return $self->rest_error( "404" ) unless $user;
     return $self->rest_error( "403" ) unless $user == $remote;
 
-    my $tags = $args->{body}{tags};
+    my $tag = $args->{query}{tag};
 
-    #push the usernames for all comms the user has posting access to onto the list.
-    foreach my $tag ( @{$tags} ) {
+    LJ::Tags::delete_usertag( $user, 'name', $tag );
 
-        LJ::Tags::delete_usertag( $user, 'name', $tag );
-    }
-
-    return $self->rest_ok( $tags );
+    return $self->rest_ok( $tag );
     }
 
 

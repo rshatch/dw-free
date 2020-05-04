@@ -1,0 +1,34 @@
+---
+paths:
+  /users/{username}/read/check:
+    parameters:
+      - name: username
+        in: path
+        description: The journal you want entry information for
+        required: true
+        schema:
+          type: string
+          minLength: 3
+          maxLength: 25
+          pattern: "^[0-9A-Za-z_]+$"
+      - name: since
+        in: query
+        description: time to check for new entries from (in ISO8601 format)
+        required: true
+        schema:
+          type: string
+          format: date-time
+      - name: filter
+        in: query
+        description: reading list filter to check for updates in
+        schema:
+          type: string
+    get:
+      description: Whether or not there are new reading list entries, and the interval until another check is allowed. This is the best way to check for updates, as it's faster and easier on the server.
+      responses:
+        200:
+          description: A list of entries
+        404:
+          description: Journal specified does not exist.
+        403:
+          description: Account type is not allowed to use this method.

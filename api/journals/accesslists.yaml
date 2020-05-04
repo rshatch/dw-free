@@ -49,4 +49,4 @@ paths:
         404:
           description: No user found.
         400:
-          description: Missing or invalid parameters.  
+          description: Missing or invalid parameters.

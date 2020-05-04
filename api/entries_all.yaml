@@ -83,6 +83,12 @@ paths:
                 comment_settings:
                   type: string
                   description: Comment settings for the new entry. `nocomments` disables comments, and `noemail` disables notifications. If omitted, the journal default will be used.
+                current_location:
+                  type: string
+                  description: Current location (does not have to be a real location)
+                current_music:
+                  type: string
+                  description: Current music
                 tags:
                   description: An array of tags to apply to the entry.
                   type: array

@@ -180,10 +180,6 @@ sub _dispatcher {
     my $handler     = $self->{path}{methods}->{$method}->{handler};
     my $method_self = $self->{path}{methods}->{$method};
 
-    if ($method eq 'delete') {
-        print "Hit a delete method";
-    }
-
     # check method-level parameters
     for my $param ( keys %{ $method_self->{params} } ) {
         my $valid = _validate_param( $param, $method_self->{params}{$param}, $r, undef, $args );
@@ -278,6 +274,7 @@ sub _validate_body {
     my ( $config, $r, $arg_obj ) = @_;
     my $preq         = $config->{required};
     my $content_type = lc $r->header_in('Content-Type');
+    $content_type =~ s/;.*//; # drop data that isn't the MIMEtype
     my $p;
 
     if ( $content_type eq 'application/json' ) {
@@ -314,8 +311,7 @@ sub _validate_body {
     #return 1 unless ( defined $p && defined($config->{content}->{$content_type}{validator}));
 
     # run the schema validator
-    warn Dumper($p);
-    my @errors = $config->{$content_type}{validator}->validate($p);
+    my @errors = $config->{content}{$content_type}{validator}->validate($p);
     if (@errors) {
         my $err_str = join( ', ', map { $_->{message} } @errors );
         $r->print(
@@ -323,7 +319,6 @@ sub _validate_body {
         $r->status('400');
         return 0;
     }
-    warn Dumper($p);
     $arg_obj->{body} = $p;
     
     return 1;
@@ -433,5 +428,18 @@ sub key_handler {
     $r->print($key->{keyhash});
     return $r->OK;
 }   
+
+DW::Routing->register_string('/internal/api/404', \&api_404_handler, app => 1);
+
+sub api_404_handler {
+    my ( $ok, $rv ) = controller(anonymous => 1);
+    return $rv unless $ok;
+    my $r             = $rv->{r};
+
+    $r->status(404);
+    $r->content_type('application/json; charset=utf-8');
+    $r->print(to_json( { success => 0, error => "Not found." }));
+    return $r->OK;
+}
 
 1;

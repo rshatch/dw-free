@@ -450,15 +450,12 @@ body<=
     $ret .= "<p>$ML{'.api.text'}</p>";
     if (@{ $apikeys }) {
         $ret .= "<table border=\"0\">";
-        my $count = 0;
         for my $key (@$apikeys) {
             $ret .= '<tr><td>';
-            $ret .= $key->{keyhash};
+            $ret .= LJ::html_copytext({name => 'api-key', value => $key->{keyhash}, size => 33 });
             $ret .= '</td><td>';
-            # TODO: actually support delete
             $ret .= LJ::html_check({ name => 'delete', value => $key->{keyhash} });
             $ret .= '</td></tr>';
-            $count++;
         }
         $ret .= '</table><br />';
     } else {

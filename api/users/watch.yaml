@@ -18,3 +18,5 @@ paths:
           description: A list of journal names.
         404:
           description: Journal specified does not exist.
+        400:
+          description: Bad or missing request parameters.

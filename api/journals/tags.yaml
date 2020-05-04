@@ -41,11 +41,9 @@ paths:
       parameters:
         - name: tag
           in: query
-          description: An array of tags to remove from the journal.
+          description: A tag to remove from the journal.
           schema:
-            type: array
-            items:
-              type: string
+            type: string
       responses:
         200:
           description: The newly deleted tags.

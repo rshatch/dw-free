@@ -89,7 +89,7 @@ sub trust_post {
     return $self->rest_error( "403" ) unless $user == $remote;
 
     my @not_user;
-    my $journals = $args->{body}{journals};
+    my $journals = $args->{body};
 
     foreach my $journal (@{$journals}) {
         my $other_u = LJ::load_user_or_identity( $journal );
@@ -107,7 +107,7 @@ sub trust_post {
                     } );
     }
 
-    my $response = {"invalid usernames" => @not_user};
+    my $response = {"invalid usernames" => \@not_user};
 
     return $self->rest_ok( $response );
 }
@@ -121,16 +121,12 @@ sub trust_delete {
     return $self->rest_error( "403" ) unless $user == $remote;
 
     my @not_user;
-    my $journals = $args->{body}{journals};
+    my $journal = $args->{query}{journal};
 
 
-    foreach my $journal (@{$journals}) {
-        my $other_u = LJ::load_user_or_identity( $journal );
-        unless ( $other_u ) {
-            push @not_user, $journal;
-            next;
-        }
-        if ( $other_u->is_redirect && $other_u->prop( 'renamedto' ) ) {
+       my $other_u = LJ::load_user_or_identity( $journal );
+       if ($other_u) {
+               if ( $other_u->is_redirect && $other_u->prop( 'renamedto' ) ) {
             $other_u = $other_u->get_renamed_user;
         }
 
@@ -138,9 +134,12 @@ sub trust_delete {
         $user->remove_edge( $other_u, trust => {
                         nonotify => $trusted_nonotify ? 1 : 0,
                     } );
-    }
+        }
+        else {
+            push @not_user, $journal;
+        }
 
-    my $response = {"invalid usernames" => @not_user};
+    my $response = {"invalid usernames" => \@not_user};
 
     return $self->rest_ok( $response );
 }
@@ -226,6 +225,100 @@ sub info_get {
 
 
     return $self->rest_ok( $info_hash );
+}
+
+# read/check
+
+my $reading_check = DW::Controller::API::REST->path('users/reading_check.yaml', 1, { get => \&checkforupdates});
+
+sub checkforupdates {
+
+    my ( $self, $args) = @_;
+
+    my $user = LJ::load_user( $args->{path}{username});
+    my $remote = $args->{user};
+    return $self->rest_error( '404' ) unless $user;
+
+    my $lastupdate = $args->{query}{since};
+
+    my $res = {};
+
+    # return immediately if they can't use this mode
+    unless ( $user->can_use_checkforupdates ) {
+        $self->rest_error(403);
+    }
+
+    # return $self->rest_error( 400 )
+    #     unless ( $lastupdate =~ /^\d\d\d\d-\d\d-\d\d [T|t] \d\d:\d\d:\d\d/ );
+
+    my $interval = LJ::Capabilities::get_cap_min( $user, "checkfriends_interval" );
+    $res->{'interval'} = $interval;
+
+    my $filter;
+    if ( $args->{query}{filter}) {
+        $filter = $user->content_filters( name => $args->{query}{filter});
+        return $self->rest_error(400, "Invalid filter name. Trying to check updates for a filter that does not exist.")
+            unless $filter;
+    }
+
+    my $memkey = [ $user->id, "checkforupdates:$user->{userid}:" . ( $filter ? $filter->id : "" ) ];
+    my $update = LJ::MemCache::get($memkey);
+    unless ($update) {
+        my @fr = $user->watched_userids;
+
+        # FIXME: see whether we can just get the list of users who are in the filter
+        if ($filter) {
+            my @filter_users;
+
+            foreach my $fid (@fr) {
+                push @filter_users, $fid
+                    if $filter->contains_userid($fid);
+            }
+            @fr = @filter_users;
+        }
+
+        unless (@fr) {
+            $res->{'new'}        = 0;
+            $res->{'lastupdate'} = $lastupdate;
+            return $res;
+        }
+        if (@LJ::MEMCACHE_SERVERS) {
+            my $tu  = LJ::get_timeupdate_multi( { memcache_only => 1 }, @fr );
+            my $max = 0;
+            foreach ( values %$tu ) {
+                $max = $_ if $_ > $max;
+            }
+            $update = LJ::mysql_time($max) if $max;
+        }
+        unless ($update) {
+            my $dbr = LJ::get_db_reader();
+            unless ($dbr) {
+
+                # rather than return a 502 no-db error, just say no updates,
+                # because problem'll be fixed soon enough by db admins
+                $res->{'new'}        = 0;
+                $res->{'lastupdate'} = $lastupdate;
+                return $res;
+            }
+            my $list = join( ", ", map { int($_) } @fr );
+            if ($list) {
+                my $sql = "SELECT MAX(timeupdate) FROM userusage " . "WHERE userid IN ($list)";
+                $update = $dbr->selectrow_array($sql);
+            }
+        }
+        LJ::MemCache::set( $memkey, $update, time() + $interval ) if $update;
+    }
+    $update ||= "0000-00-00 00:00:00";
+
+    if ( $update gt $lastupdate ) {
+        $res->{'new'} = 1;
+    }
+    else {
+        $res->{'new'} = 0;
+    }
+
+    $res->{'lastupdate'} = $update;
+    $self->rest_ok( $res );
 }
 
     1;

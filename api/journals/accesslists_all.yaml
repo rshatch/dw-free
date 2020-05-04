@@ -51,3 +51,21 @@ paths:
           description: Missing or invalid parameter
         404:
           description: No such user.
+    delete:
+      description: Permanently delete an access group, removing it from all entries.
+      parameters:
+        - name: id
+          in: query
+          required: true
+          description: ID of accesslist to delete.
+          schema:
+            type: integer
+      responses:
+        200:
+          description: Success
+        403:
+          description: You can't remove that accesslist.
+        404:
+          description: No user found.
+        400:
+          description: Invalid parameters

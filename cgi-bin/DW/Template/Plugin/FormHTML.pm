@@ -404,6 +404,26 @@ sub textbox {
     return $ret;
 }
 
+=head2 [% form.copytext( id="elementid", name="elementname", ... ) %]
+
+Return a textbox (input type="text") with a button fo allow copy to clipboard via JS.Values
+are prepopulated by the plugin's datasource.
+
+=cut
+
+sub copytext {
+    my ( $self, $args ) = @_;
+
+    $args->{class} .= " copy-text";
+    $args->{id}    ||= $self->generate_id($args);
+
+    my $ret = "";
+    $ret .= $self->_process_value_and_label($args);
+    $ret .= LJ::html_copytext($args);
+
+    return $ret;
+}
+
 =head2 [% form.password( label="A Label", id="elementid", name="elementname",... ) %]
 
 Return a password field with a matching label, if provided. Values are never prepopulated

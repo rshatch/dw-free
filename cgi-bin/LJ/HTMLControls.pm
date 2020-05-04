@@ -370,6 +370,34 @@ sub html_text {
 }
 
 # <LJFUNC>
+# name: LJ::html_copytext
+# class: component
+# des: Creates a text field formatted for easy copying.
+# info: Allows 'type' =&gt; 'password' flag.
+# args:
+# des-:
+# returns: The generated HTML.
+# </LJFUNC>
+sub html_copytext {
+    my $opts = shift;
+
+    my $disabled = $opts->{'disabled'} ? " disabled='disabled'" : "";
+    my $ehtml    = $opts->{'noescape'} ? 0                      : 1;
+    my $type     = 'text';
+
+    my $ret = '';
+    $ret .= "<input type=\"$type\"";
+    foreach ( grep { !/^(disabled|raw|noescape)$/ } keys %$opts ) {
+        my $val = defined $opts->{$_} ? $opts->{$_} : '';
+        $ret .= " $_=\"" . ( $ehtml ? LJ::ehtml($val) : $val ) . "\"";
+    }
+    if ( $opts->{'raw'} ) { $ret .= " $opts->{'raw'}"; }
+    $ret .= "readonly />";
+    $ret .= "<input type=button value=Copy />";
+    return $ret;
+}
+
+# <LJFUNC>
 # name: LJ::html_textarea
 # class: component
 # des: Creates a text box for multi-line input (the <textarea> tag).

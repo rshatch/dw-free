@@ -24,18 +24,13 @@ paths:
         content:
           application/json:
             schema:
-              type: object
-              required:
-              - journals
-              properties:
-                journal:
-                  description: journals to add
-                  type: array
-                  items:
-                    type: string
-                    minLength: 3
-                    maxLength: 25
-                    pattern: "^[0-9A-Za-z_]+$"    
+              description: journals to add
+              type: array
+              items:
+                type: string
+                minLength: 3
+                maxLength: 25
+                pattern: "^[0-9A-Za-z_]+$"    
       responses:
         200:
           description: A list of journal names.
@@ -46,18 +41,16 @@ paths:
         400:
           description: Invalid parameters
     delete:
-      description: Remove read access to journals in the `journals` list.
+      description: Remove read access to a journal.
       parameters:
-        - name: journals
+        - name: journal
           in: query
-          description: journals to remove
+          description: journal to remove
           schema:
-            type: array
-            items:
-              type: string
-              minLength: 3
-              maxLength: 25
-              pattern: "^[0-9A-Za-z_]+$"     
+            type: string
+            minLength: 3
+            maxLength: 25
+            pattern: "^[0-9A-Za-z_]+$"     
       responses:
         200:
           description: A list of journal names.

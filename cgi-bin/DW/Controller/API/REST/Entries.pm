@@ -129,15 +129,15 @@ sub new_entry {
 
 
         # if we didn't have any errors with decoding the form, proceed to post
-        my %post_res = _do_post( $form_req, $flags, \%auth);
-        return $self->rest_ok( \%post_res ) if $post_res{status} eq "ok";
+        my $post_res = _do_post( $form_req, $flags, \%auth);
+
+        return $self->rest_ok( $post_res ) if $post_res->{success} == 1;
 
         # oops errors when posting: show error, fall through to show form
-        return $self->rest_error( '500', $post_res{errors} ) if $post_res{errors};
+        return $self->rest_error( '500', $post_res->{errors} ) if $post_res->{errors};
 
 
 
-    return $self->rest_ok( "Success!" );
 }
 
 
@@ -339,7 +339,7 @@ sub _do_post {
     my $err = 0;
     my $res = LJ::Protocol::do_request( "postevent", $req, \$err, $flags );
 
-    return { errors => LJ::Protocol::error_message( $err ) } unless $res;
+    return { { success=> 0, errors => LJ::Protocol::error_message( $err )} } unless $res;
 
 
     # post succeeded, time to do some housecleaning
@@ -348,13 +348,16 @@ sub _do_post {
 
     # special-case moderated: no itemid, but have a message
     if ( ! defined $res->{itemid} && $res->{message} ) {
-        $render_ret = $res->{message};
+        $render_ret = { success => 1,
+                        message => $res->{message} };
     } else {
-        $render_ret = "Post successful."
-
+        my $ditemid = $res->{itemid}*256 + $res->{anum};
+        $render_ret = { success => 1,
+                        url => $res->{url},
+                        entry_id => $ditemid};
     }
 
-    return ( status => "ok", render => $render_ret );
+    return ($render_ret);
 }
 
 
@@ -378,7 +381,10 @@ sub rest_get {
 
     if (defined $ditemid && $ditemid ne "") {
         my $item = LJ::Entry->new($journal, ditemid => $ditemid);
-        return $self->rest_error('404') unless $item;
+
+        # $item will always exist, even if it's not actually a real entry id
+        # however, entries must have content, so no content means it's a bad object.
+        return $self->rest_error('404') unless $item->event_html;
 
         return $self->rest_error('403') unless $item->visible_to($remote);
 
@@ -506,15 +512,15 @@ sub edit_entry {
             my $form_req = _backend_to_form($entry_obj);
             _form_to_backend( $form_req, $post);
 
-                my %edit_res = _do_edit(
+                my $edit_res = _do_edit(
                         $ditemid,
                         $form_req,
                         { remote => $remote, journal => $usejournal },
                         );
-                return $edit_res{render} if $edit_res{status} eq "ok";
+                return $self->rest_ok($edit_res) if $edit_res->{success} == 1;
 
                 # oops errors when posting: show error, fall through to show form
-                return $self->rest_error( 'POST', 500, $edit_res{errors} ) if $edit_res{errors};
+                return $self->rest_error( 500, $edit_res->{errors} ) if $edit_res->{errors};
             }
 
 
@@ -537,14 +543,16 @@ sub _do_edit {
             u =>  $auth->{remote},
         } );
 
-    return { errors => LJ::Protocol::error_message( $err ) } unless $res;
+    return { { success => 0, errors => LJ::Protocol::error_message($err) } } unless $res;
 
     my $remote = $auth->{remote};
     my $journal = $auth->{journal};
 
-    my $render_ret;
+    my $render_ret = {success => 1,
+                        url => $res->{url},
+                        entry_id => $ditemid};
 
-    return ( status => "ok", render => $render_ret );
+    return ( $render_ret );
 }
 
 

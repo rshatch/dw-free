@@ -70,7 +70,7 @@ sub body {
     $self->{requestBody}->{required} = $config->{required};
     for my $ct ( keys( $config->{content}) ) {
         my $param = DW::API::Parameter->define_body($config->{content}->{$ct}, $ct);
-        $self->{requestBody}->{$ct} = $param;
+        $self->{requestBody}{content}{$ct} = $param;
         }
 
 }
@@ -202,6 +202,11 @@ sub TO_JSON {
 
     if (defined $self->{requestBody}) {
         $json->{requestBody} = $self->{requestBody};
+        if (defined $self->{requestBody}{required} && $self->{requestBody}{required}) {
+            $json->{requestBody}{required} = $JSON::true;
+        } else {
+            delete $json->{requestBody}{required};
+        }
     }
 
     my $responses = $self->{responses};
