@@ -1,0 +1,46 @@
+[%- CALL dw.active_resource_group("foundation") -%]
+[%- sections.title = title -%]
+
+[% IF action == "touch" %]
+<h1>[% '.touched' | ml %]</h1>
+<p>
+    [%- '.your.request' | ml -%]
+    [%- sp.state == 'open' ? dw.ml('.will.stay.open.now') : dw.ml('.has.been.reopened') -%]
+    [%- '.please.comment' | ml -%]
+</p>
+
+<form method="post" action="append_request">
+    [% form.hidden( name = 'spid', value = spid) %]
+    [% form.hidden( name = 'auth', value = auth) %]
+    <table summary='' border='0'>\n";
+
+        <tr valign="middle">
+            <td align="right">From:</td>
+            <td>
+                [% IF remote && remote.userid %]
+                    [% remote.ljuser_display %]
+                [% ELSE %]
+                    (not logged in)
+                [% END %]
+            </td>
+        </tr>
+
+        <tr>
+            <td align='right'>Reply Type:</td>
+            <td>
+                [%- form.hidden( name = 'replytype', value = 'comment') -%]
+                <b>[% '.more.info' | ml %]</b>
+            </td>
+        </tr>
+
+        <tr valign="top">
+            <td align="right">[% '.message' | ml %]</td>
+            <td colspan="2">
+                [% form.textarea( rows = 10, cols = 50, name = "body") %]
+                <span class="details">[% '.no.html.allowed3' | ml %]</span>
+                [% form.submt( name = 'submitpost', value = dw.ml('.postbutton')) %]
+            </td>
+        </tr>
+    </table>
+</form>
+[% END %]

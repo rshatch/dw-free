@@ -1,0 +1,46 @@
+[%- CALL dw.active_resource_group("foundation") -%]
+
+[%- sections.title = dw.ml('.title') -%]
+
+<p>[% '.info' | ml %]</p>
+<form method='GET'>
+    <table summary=''>
+        <tr>
+            <td>[% '.label.term' | ml %]:</td>
+            <td>[%- form.textbox( size = 30, value = q, name = 'q') -%]
+                [%- form.submit( 'value' = dw.ml('.button.search')) -%]
+            </td>
+        </tr>
+
+        <tr>
+            <td>
+                [% '.label.lang' %]
+            </td>
+            <td>
+                [%- form.select( name = 'lang', selected = sel, langs) -%]
+                [% '.example' | ml %]
+            </td>
+        </tr>
+    </table>
+</form>
+[%- IF defined(q) && q.len < 1 -%]
+<p><i>[% '.error.noterm' | ml %]</i></p>
+[%- END -%]
+
+[%- IF defined(q) && q.len < 2 -%]
+<p><i>[% '.error.tooshort' | ml %]</i></p>
+[%- END -%]
+
+
+[%- IF results -%]
+    [%- IF results.len < 1 -%]
+        <p><i>[% '.error.noresults' | ml %]</i></p>
+    [%- ELSE -%]
+
+    <ul class='spaced'>
+        [%- FOR r IN results -%]
+            <li><a href='/support/faqbrowse?faqid=[% r.id %]"&q=[% r.ueq _ r.ul %]'>[% r.dq %]</a></li>
+        [%- END -%]
+    </ul>
+    [%- END -%]
+[%- END -%]

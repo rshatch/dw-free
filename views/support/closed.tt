@@ -1,0 +1,15 @@
+[%- CALL dw.active_resource_group("foundation") -%]
+
+[%- sections.title = title -%]
+<h1>[% '.closed' | ml %]</h1>
+[% IF show_links %]
+<ul>
+    <li>[% '.go.back.to.request' | ml({ 'back.req.url' => "href='see_request?id=${sp.spid}'", 'spid' => sp.spid}) %]</li>
+    <li>[% '.go.back.to.open.request' | ml({ "url" => "href='help'"}) %]</li>
+    <li>[% '.go.back.to.category' | ml({ "url" => "href='help?cat=${sp._cat.catkey}'"}) %]</li>
+    <li>[% '.go.to.previous.next.request' | ml({ "prev.url" => "href='see_request?id=${sp.spid}&find=prev'", "next.url" => "href='see_request?id=${sp.spid}&find=next'"}) %]</li>
+    <li>[% '.go.to.previous.next.req.cat' | ml({ "prev.url" => "href='see_request?id=${sp.spid}&find=cprev'", "next.url" => "href='see_request?id=${sp.spid}&find=cnext'"}) %]</li>
+</ul>
+[% ELSE %]
+<p>[% '.request.closed' | ml %]</p>
+[% END %]
