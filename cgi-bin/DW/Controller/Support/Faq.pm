@@ -25,8 +25,8 @@ use DW::Controller;
 use DW::Routing;
 use DW::Template;
 
-DW::Routing->register_string( '/support/faq',    \&faq_handler,    app => 1 );
-DW::Routing->register_string( '/support/faqpop', \&faqpop_handler, app => 1 );
+DW::Routing->register_string( '/support/faq',       \&faq_handler,       app => 1 );
+DW::Routing->register_string( '/support/faqpop',    \&faqpop_handler,    app => 1 );
 DW::Routing->register_string( '/support/faqbrowse', \&faqbrowse_handler, app => 1 );
 DW::Routing->register_string( '/support/faqsearch', \&faqsearch_handler, app => 1 );
 
@@ -159,76 +159,88 @@ sub faqpop_handler {
 sub faqbrowse_handler {
     my $r = DW::Request->get;
 
-    my ($ok, $rv) = controller(anonymous => 1, form_auth => 1);
+    my ( $ok, $rv ) = controller( anonymous => 1, form_auth => 1 );
     return $rv unless $ok;
 
     my $remote = $rv->{remote};
-    my $GET = $r->get_args;
+    my $GET    = $r->get_args;
     my $user;
     my $user_url;
     my $vars;
 
     if ($remote) {
-        $user = $remote->user;
+        $user     = $remote->user;
         $user_url = $remote->journal_base;
-    } else {
+    }
+    else {
         my $u = LJ::load_user($LJ::EXAMPLE_USER_ACCOUNT);
-        $user = $u ? $u->user : "<b>[Unknown or undefined example username]</b>";
+        $user     = $u ? $u->user         : "<b>[Unknown or undefined example username]</b>";
         $user_url = $u ? $u->journal_base : "<b>[Unknown or undefined example username]</b>";
     }
 
-        # get faqid and redirect to faq.bml if none
+    # get faqid and redirect to faq.bml if none
     my $faqidarg = $GET->{'faqid'} + 0;
+
     # FIXME: disallow both faqid and faqcat (or ignore one)
     my $faqcatarg = $GET->{'faqcat'};
 
-    unless ($faqidarg || $faqcatarg) {
+    unless ( $faqidarg || $faqcatarg ) {
         return $r->redirect("faq");
     }
 
-        # get language settings
+    # get language settings
     my $curlang = $GET->{'lang'} || BML::get_language();
     my $deflang = BML::get_language_default();
     my $altlang = $curlang ne $deflang;
-    my $mll = LJ::Lang::get_lang($curlang);
-    my $mld = LJ::Lang::get_dom("faq");
+    my $mll     = LJ::Lang::get_lang($curlang);
+    my $mld     = LJ::Lang::get_dom("faq");
     $altlang = 0 unless $mll && $mld;
     my $lang = $altlang ? $curlang : $deflang;
     $vars->{altlang} = $altlang;
     $vars->{curlang} = $curlang;
 
-    my $mode = ($GET->{'view'} eq 'full' || $faqidarg) ? 'answer' : 'summary';
+    my $mode = ( $GET->{'view'} eq 'full' || $faqidarg ) ? 'answer' : 'summary';
 
     my @faqs;
     my $title;
     my $body;
-   my $dbr = LJ::get_db_reader();
-    if ( $faqidarg ) {
+    my $dbr = LJ::get_db_reader();
+    if ($faqidarg) {
+
         # loading single faqid
         @faqs = ( LJ::Faq->load( $faqidarg, lang => $lang ) );
         unless ( $faqs[0] ) {
             $title = LJ::Lang::ml( '.error.title_nofaq', { faqid => $faqidarg } );
-            $body = LJ::Lang::ml( '.error.nofaq' );
+            $body  = LJ::Lang::ml('.error.nofaq');
             return $_[1]->{'body'};
         }
         $faqs[0]->render_in_place( { user => $user, url => $user_url } );
         $title = $faqs[0]->question_html;
-    } elsif ( $faqcatarg ) {
+    }
+    elsif ($faqcatarg) {
+
         # loading entire faqcat
         my $catname;
-        if ( $altlang ) {
+        if ($altlang) {
             $catname = LJ::Lang::get_text( $curlang, "cat.$faqcatarg", $mld->{dmid} );
-        } else {
+        }
+        else {
             $catname = $dbr->selectrow_array( "SELECT faqcatname FROM faqcat WHERE faqcat=?",
-                                              undef, $faqcatarg );
+                undef, $faqcatarg );
             die $dbr->errstr if $dbr->err;
         }
 
-        $title = LJ::Lang::ml( '.title_cat', { catname => LJ::ehtml( $catname ) } );
-        @faqs = sort { $a->sortorder <=> $b->sortorder }
-                     LJ::Faq->load_all( lang => $lang, cat => $faqcatarg );
-        LJ::Faq->render_in_place( { lang => $lang, user => $user,
-                                    url => $user_url }, @faqs );
+        $title = LJ::Lang::ml( '.title_cat', { catname => LJ::ehtml($catname) } );
+        @faqs  = sort { $a->sortorder <=> $b->sortorder }
+            LJ::Faq->load_all( lang => $lang, cat => $faqcatarg );
+        LJ::Faq->render_in_place(
+            {
+                lang => $lang,
+                user => $user,
+                url  => $user_url
+            },
+            @faqs
+        );
         $vars->{faqcatarg} = 1;
 
     }
@@ -242,47 +254,48 @@ sub faqbrowse_handler {
 
     foreach my $f (@faqs) {
         my $cleanf;
-        my $faqid = $f->faqid; # Used throughout, including in interpolations
+        my $faqid = $f->faqid;    # Used throughout, including in interpolations
         $dbh ||= LJ::get_db_writer();
 
         # log this faq view
         if ( $remote && LJ::is_enabled('faquses') ) {
-            $dbh->do("REPLACE INTO faquses (faqid, userid, dateview) ".
-                     "VALUES (?, ?, NOW())", undef, $faqid,
-                     $remote->{'userid'});
+            $dbh->do( "REPLACE INTO faquses (faqid, userid, dateview) " . "VALUES (?, ?, NOW())",
+                undef, $faqid, $remote->{'userid'} );
         }
 
-        BML::note_mod_time($f->unixmodtime);
+        BML::note_mod_time( $f->unixmodtime );
 
         my $summary = $f->summary_raw;
-        my $answer = $f->answer_raw;
+        my $answer  = $f->answer_raw;
 
         # What to display?
         my $display_summary;
         my $display_answer;
-        if ( $mode eq 'answer' ) { # answer, summary if present
-            $display_answer = 1;
+        if ( $mode eq 'answer' ) {    # answer, summary if present
+            $display_answer  = 1;
             $display_summary = $f->has_summary;
-        } else { # summary if there's one, answer if there's no summary
+        }
+        else {                        # summary if there's one, answer if there's no summary
             $display_summary = $f->has_summary;
-            $display_answer = !$display_summary;
+            $display_answer  = !$display_summary;
         }
 
         # If summaries are disabled, pretend the FAQ doesn't have one.
-        unless ( LJ::is_enabled( 'faq_summaries' ) ) {
+        unless ( LJ::is_enabled('faq_summaries') ) {
             $display_answer ||= $display_summary;
             $display_summary = 0;
         }
 
         # escape question
         my $question = $f->question_html;
-        $question =~ s/^\s+//; $question =~ s/\s+$//;
+        $question =~ s/^\s+//;
+        $question =~ s/\s+$//;
         $question =~ s/\n/<br \/>/g;
 
         # Clean this as if it were an entry, but don't allow lj-cuts
-        LJ::CleanHTML::clean_event(\$summary, {'ljcut_disable' => 1})
+        LJ::CleanHTML::clean_event( \$summary, { 'ljcut_disable' => 1 } )
             if $display_summary;
-        LJ::CleanHTML::clean_event(\$answer,  {'ljcut_disable' => 1})
+        LJ::CleanHTML::clean_event( \$answer, { 'ljcut_disable' => 1 } )
             if $display_answer;
 
         # Highlight search terms
@@ -310,49 +323,53 @@ sub faqbrowse_handler {
         # from false to true. Should that be checked/enforced here instead?
         # FIXME: do we even need that hook? It looks like LJ only ever used
         # it to add stuff to LJ Talk FAQs, for Gizmo sponsorship.
-        LJ::Hooks::run_hook( "faq.$faqid.transform", $remote, question => \$question,
-                      summary => \$summary, display_summary => \$display_summary,
-                      answer => \$answer, display_answer => \$display_answer)
-            if LJ::Hooks::are_hooks( "faq.$faqid.transform" );
+        LJ::Hooks::run_hook(
+            "faq.$faqid.transform", $remote,
+            question        => \$question,
+            summary         => \$summary,
+            display_summary => \$display_summary,
+            answer          => \$answer,
+            display_answer  => \$display_answer
+        ) if LJ::Hooks::are_hooks("faq.$faqid.transform");
 
-        my $lastmodwho = LJ::get_username($f->lastmoduserid)
+        my $lastmodwho = LJ::get_username( $f->lastmoduserid );
 
-        $cleanf = { 'faqid'   => $faqid,
+        $cleanf = {
+            'faqid'           => $faqid,
             'question'        => $question,
             'answer'          => $answer,
             'summary'         => $summary,
             'display_summary' => $display_summary,
             'display_answer'  => $display_summary,
             'lastmodwho'      => $lastmodwho
-                    };
-
+        };
 
         # this is incredibly ugly. i'm sorry.
         if ( $altlang && $remote && $remote->has_priv( "translate", $curlang ) ) {
             my @itids;
-            push @itids, LJ::Lang::get_itemid($mld->{'dmid'}, "$faqid.$_")
+            push @itids, LJ::Lang::get_itemid( $mld->{'dmid'}, "$faqid.$_" )
                 foreach qw(1question 3summary 2answer);
-            my $items = join(",", map { $mld->{'dmid'} . ":" . $_ } @itids);
+            my $items = join( ",", map { $mld->{'dmid'} . ":" . $_ } @itids );
             $cleanf->{t_items} = $items;
         }
-
 
         # get the name of this faq's category, if loading a single faqid
         if ($faqidarg) {
             if ($altlang) {
-                $categoryname = LJ::Lang::get_text($curlang, "cat.$backfaqcat", $mld->{'dmid'});
-            } else {
-                $categoryname = $dbr->selectrow_array("SELECT faqcatname FROM faqcat WHERE faqcat=?",
-                                             undef, $backfaqcat);
+                $categoryname = LJ::Lang::get_text( $curlang, "cat.$backfaqcat", $mld->{'dmid'} );
+            }
+            else {
+                $categoryname =
+                    $dbr->selectrow_array( "SELECT faqcatname FROM faqcat WHERE faqcat=?",
+                    undef, $backfaqcat );
             }
             $cleanf->{categoryname} = $categoryname;
         }
         push @cleanfaqs, $cleanf;
-     }
-
+    }
 
     $vars->{title} = $title;
-    $vars->{faqs} = \@cleanfaqs;
+    $vars->{faqs}  = \@cleanfaqs;
 
     return DW::Template->render_template( 'support/faqbrowse.tt', $vars );
 }
@@ -360,11 +377,11 @@ sub faqbrowse_handler {
 sub faqsearch_handler {
     my $r = DW::Request->get;
 
-    my ($ok, $rv) = controller(anonymous => 1, form_auth => 1);
+    my ( $ok, $rv ) = controller( anonymous => 1, form_auth => 1 );
     return $rv unless $ok;
 
     my $remote = $rv->{remote};
-    my $GET = $r->get_args;
+    my $GET    = $r->get_args;
     my $vars;
 
     my @langs;
@@ -372,9 +389,9 @@ sub faqsearch_handler {
         my $l = LJ::Lang::get_lang($code);
         next unless $l;
 
-        my $item = "langname.$code";
+        my $item         = "langname.$code";
         my $namethislang = BML::ml($item);
-        my $namenative = LJ::Lang::get_text($l->{'lncode'}, $item);
+        my $namenative   = LJ::Lang::get_text( $l->{'lncode'}, $item );
 
         push @langs, $code;
 
@@ -384,12 +401,12 @@ sub faqsearch_handler {
     }
 
     my $curr = BML::get_language();
-    my $sel = $GET->{'lang'} || $curr;
-    my $q = $GET->{'q'};
+    my $sel  = $GET->{'lang'} || $curr;
+    my $q    = $GET->{'q'};
 
     $vars->{langs} = \@langs;
-    $vars->{sel} = $sel;
-    $vars->{q} = $q;
+    $vars->{sel}   = $sel;
+    $vars->{q}     = $q;
 
     return unless $q && length $q < 2;
 
@@ -399,17 +416,17 @@ sub faqsearch_handler {
 
     # Get remote username and journal URL, or example user's username and journal URL
     if ($remote) {
-        $user = $remote->user;
+        $user     = $remote->user;
         $user_url = $remote->journal_base;
     }
     else {
         my $u = LJ::load_user($LJ::EXAMPLE_USER_ACCOUNT);
-        $user = $u ? $u->user : "<b>[Unknown or undefined example username]</b>";
+        $user     = $u ? $u->user         : "<b>[Unknown or undefined example username]</b>";
         $user_url = $u ? $u->journal_base : "<b>[Unknown or undefined example username]</b>";
     }
 
-    my @results = LJ::Faq->load_matching($q, lang => $lang, user => $user, url => $user_url);
-    if (@results > 25) {@results = @results[0 .. 24];}
+    my @results = LJ::Faq->load_matching( $q, lang => $lang, user => $user, url => $user_url );
+    if ( @results > 25 ) { @results = @results[ 0 .. 24 ]; }
 
     my $term = sub {
         my $term = shift;
@@ -420,13 +437,13 @@ sub faqsearch_handler {
     foreach my $f (@results) {
         my $dq = $f->question_html;
         $dq =~ s/(\Q$q\E)/$term->($1) /ige;
-        my $ueq = LJ::eurl($q);
-        my $ul = $GET->{'lang'} ne $curr ? "&amp;lang=" . $GET->{'lang'} : '';
+        my $ueq   = LJ::eurl($q);
+        my $ul    = $GET->{'lang'} ne $curr ? "&amp;lang=" . $GET->{'lang'} : '';
         my $clean = { dq => $dq, ueq => $ueq, ul => $ul, id => $f->faqid };
         push @clean_results, $clean;
     }
     $vars->{results} = \@clean_results;
-    return DW::Template->render_template('support/faqsearch.tt', $vars);
+    return DW::Template->render_template( 'support/faqsearch.tt', $vars );
 }
 
 1;

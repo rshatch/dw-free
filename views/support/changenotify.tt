@@ -1,0 +1,47 @@
+[%- sections.windowtitle = '.title' | ml -%]
+[% IF mode == "modify" %]
+<form method='post' action='changenotify'>
+    <input type='hidden' name='mode' value='save'/>
+    [% dw.form_auth() %]
+    [%- sections.title = '.chagenotify.title' | ml -%]
+    <p>[% '.chagenotify.text' | ml %]</p>
+
+    <div style='margin-left: 30px'>
+        [% FOR cat IN cat_selects %]
+            [% form.select( name = "spcatid_$cat.id",
+                items            = cat.options,
+                selected         = cat.sel,
+                label            = cat.name
+                ) %]
+        [% END %]
+    </div>
+    [% form.checkbox(
+        name     = 'opt_getselfsupport',
+        id       = 'opt_getselfsupport',
+        selected = remote.prop('opt_getselfsupport'),
+        label    = dw.ml('.getownresponses')
+        ) %]
+
+    <h1>[% '.done.title' | ml %]</h1>
+    <p>[% '.done.text' | ml %]</p>
+    <div class='action-box'>
+        <ul class='inner nostyle'>
+            <li>[% form.submit(value = dw.ml('submit.button')) %]</li>
+        </ul>
+    </div>
+    <div class='clear-floats'></div>
+</form>
+
+
+[% ELSIF mode == "save" %]
+    [%- sections.title = '.success.title' | ml -%]
+    <p>[% '.success.text' | ml %]</p>
+    <p>[% '.success.fromhere' | ml %]</p>
+    <ul>
+        <li><a href='[% site.root %]/support/help'>[% '.success.fromhere.board' | ml %]</a></li>
+        <li><a href='[% site.root %]/support'>[% '.success.fromhere.support' | ml %]</a></li>
+    </ul>
+
+[% ELSE %]
+    [% '.unknow.mode' | ml %]
+[% END %]

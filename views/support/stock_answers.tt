@@ -1,0 +1,63 @@
+[%- sections.windowtitle = 'Support Stock Answers'-%]
+
+[% IF status == 'new' %]
+    <form method='post' action='[% url %]'>
+        [% dw.form_auth() %]
+        <p>[% '.fill.out.following' | ml %]</p>
+        [% form.select( name = 'spcatid', selected = selected, items = options, label = "Category") %]
+        [% form.textbox( name = 'subject', maxlength = 255, size = 40, label = dw.ml('.subject')) %]
+        [% form.textarea( name = 'body', rows = 15, cols = 80) %]
+        [% form.submit( name = 'action:new', value = "Save Answer") %]
+    </form>
+
+[% ELSE %]
+    <p>
+    <form method='get' action='$url'>
+        [% '.filter' | ml %]
+        [% form.select( name = 'spcatid', selected = spcatid, items = filter_options, label = "Category") %]
+        [% form.submit( name = "show") %]
+    </form></p>
+
+
+    <p>[ <a href='$url'>[% '.view.all' | ml %]</a> ]
+        [% IF canedit %]
+            [ <a href='[% "$url?new=1&spcatid=$spcatid" %]'>[% '.add.new.answer' | ml %]</a> ]
+        [% END %]
+    </p>
+
+    [% IF added %]
+    <p><strong>[% '.answer.added' | ml %]</strong></p>
+    [% ELSIF saved %]
+    <p><strong>[% '.answer.saved' | ml %]</strong></p>
+    [% ELSIF deleted %]
+    <p><strong>[% '.answer.deleted' | ml %]</strong></p>
+    [% END %]
+
+    [% FOR cat IN sorted_cats %]
+    <h2><a href='[% "$url?spcatid=$cat.id" %]'>[% cat.name %]</a></h2>
+        [% "<p>${dw.ml('.category.stock.answers')}$cat.override_name<p>" IF cat.show_override %]
+    <ul>
+        [% FOR a IN cat.answers %]
+            [% IF a.body %]
+                <li>
+                    <form method='post' action='[% "$url?ansid=$a.id&spcatid=$cat.id" %]'>
+                        [% dw.form_auth() %]
+                        [% form.textbox( name = 'subject', value = a.subject, size = 40, maxlength = 255) %]
+                        [% form.textarea( name = 'body', value = a.body, rows = 15, cols = 80) %]
+                        [% '.last.modified.by' | ml %][% a.lastmod %]
+                        [% IF canedit %]
+                            [% form.submit( name = 'action:save', value = dw.ml('.save.changes')) %]
+                            [% form.submit( name = 'action:delete', value = dw.ml('.delete.answer'),
+                                { onClick => "return confirm('${dw.ml('.confirm.answer')}');"}) %]
+
+                        [% END %]
+                    </form>
+                </li>
+            [% ELSE %]
+                <li><a href='[% "$url?spcatid=$cat.id&ansid=$a.id" %]'>[% a.subject | html %]</a></li>
+            [% END %]
+        [% END %]
+    </ul>
+    [% END %]
+
+[% END %]

@@ -1,0 +1,17 @@
+[%- sections.windowtitle = '.title' | ml -%]
+
+[% IF state == 'closed' %]
+    [%- sections.title = '.closed.title' | ml -%]
+<p>[% '.closed.text' | ml %]</p>
+
+[% ELSIF state == 'bounce' %]
+    [% '.bounced.success' | ml( 'addresslist' = addresslist) %]
+    [% successlinks %]
+[% ELSE %]
+    [%- sections.title = '.logged.title' | ml -%]
+<p>[% '.logged.text' | ml %]</p>
+    [% successlinks %]
+
+[% END %]
+<hr>
+[% '.back.support2' | ml({ 'aopts' => "href='$site.root/support/'"}) %]
