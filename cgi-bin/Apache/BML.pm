@@ -1817,7 +1817,7 @@ sub get_language {
 
 sub get_language_default {
     return "en" unless Apache::BML::is_initialized();
-    return $Apache::BML::cur_req->{'env'}->{'DefaultLanguage'} || "en";
+    return $Apache::BML::cur_req->{'env'}->{'DefaultLanguage'} || "en_DW";
 }
 
 sub get_language_scope {

@@ -24,8 +24,8 @@
 
 
 
-[%- UNLESS faqs.len > 0 -%]
-    [%- sections.title = 'Error' -%]
+[%- UNLESS faqs -%]
+    [%- sections.title = title -%]
     <p><b>[% '.error.nofaq' | ml %]</b></p>
 [%- ELSE -%]
     [%- sections.title = title -%]
@@ -33,26 +33,23 @@
     [%- IF faqcatarg -%]
         <ol>
             [%- FOR f IN faqs -%]
-                <li><a href=[%- "#faq${f.faqid}" -%]>[% f.question_raw %]</a></li>
+                <li><a href=[%- "#faq${f.faqid}" -%]>[% f.question %]</a></li>
             [%- END -%]
         </ol>
     [%- END -%]
     [%- FOR f IN faqs -%]
         [%- IF faqcatarg -%]
             <h1>
-                <a style='text-decoration: none;' href='faqbrowse?faqid=[% f.faqid %]'>&#x00bb;</a><a
-                    id='faq[% f.faqid %]'></a>
-                [%- f.question -%]
+                <a id='faq[% f.faqid %]'></a>
+                <a style='text-decoration: none;' href='faqbrowse?faqid=[% f.faqid %]'>&#x00bb; [%- f.question -%]</a>
             </h1>
-        [% ELSE %]
-            <h1>[% f.question %]</h1>
         [%- END -%]
         <div style='margin-left: 20px;'>
             [%- IF f.display_summary -%]
-                <div id='summary'>[% f.summary %]</div>
+                <div class='summary'>[% f.summary %]</div>
                 [% UNLESS f.display_answer %]
 
-                    <div id='rm'>
+                    <div class='rm'>
                         [%- oc = faqcatarg ? '' : "onclick='return showAnswer();'" -%]
                         <b>( <a [% f.oc %] href='faqbrowse?faqid=[% "$f.faqid$q" %]&view=full'>[% '.more' | ml %]</a> )</b>
                     </div>
@@ -60,9 +57,9 @@
             [%- END -%]
 
             [%- IF f.display_answer -%]
-                <div id='answer'>[% f.answer %]</div>
+                <div class='answer'>[% f.answer %]</div>
             [% ELSE %]
-                <div id='answer' style='display: none'>[% f.answer %]</div>
+                <div class='answer' style='display: none'>[% f.answer %]</div>
             [%- END -%]
 
         </div>
@@ -70,7 +67,7 @@
         [%- IF f.lastmodwho -%]
             <p align="right">
                 <b>[% '.lastupdated' | ml %]</b>
-                [% f.lastmodtime %]([% lastmodwho %])
+                [% f.lastmodtime %] ([% f.lastmodwho %])
             </p>
         [%- END -%]
         [% IF remote && remote.has_priv("faqedit", f.faqcat) %]

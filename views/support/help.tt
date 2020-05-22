@@ -1,0 +1,112 @@
+<style type='text/css'>
+
+</style>
+
+
+[%- sections.windowtitle = 'Support Requests' -%]
+
+[%- CALL dw.active_resource_group("foundation") -%]
+[%- dw.need_res({ group => "foundation"}
+        "stc/support.css", "js/jquery.sorttable.js", "js/help.js"
+        ) -%]
+
+[% IF state == "closed" %]
+    [%- sections.title = '.state.closed.title' | ml -%]
+<p>[% '.state.closed.text' | ml %]</p>
+[% ELSIF state == "youreplied" %]
+    [% IF remote %]
+        [%- sections.title = '.state.youreplied.title' | ml -%]
+    <p>[% '.state.youreplied.text' | ml %]</p>
+    [% ELSE %]
+        [%- sections.title = '.state.youreplied.rem.title' | ml -%]
+    <p>[% '.state.youreplied.rem.text' | ml %]</p>
+    [% END %]
+[% ELSE %]
+    [%- sections.title = '.state.else.title' | ml -%]
+<p>[% '.state.else.text' | ml({ 'statelink' => "href=\"$site.root/support/help?state=closed&amp;cat=$filtercat\""}) %]</p>
+<div class="action-box">
+    <div class="inner"><b>[% gct %]</b> [% '.status.unanswered' | ml %],
+        <b>[% snhct %]</b> [% '.status.needhelp' | ml %],
+        <b>[% aacct %]</b> [% '.status.awaitingclose' | ml %], <b>[% rct %]</b> [% '.status.totalopen' | ml %]</div>
+</div>
+[% END %]
+
+<p>
+<form method='get' action='help'>
+    [%- '.showonlyhelp' | ml -%]
+    [% form.hidden( name = 'sort', value = sort) %]
+    [%- form.select( name = "state", id = "state", items = states, selected = state, class = 'inline') -%]
+    [% dw.ml('.requests.type') %]
+    [% form.select( name = 'cat', id="cat", items = filter_cats, selected = filtercat, class = 'inline') -%]
+
+    [% form.submit( value = dw.ml('.button.filter')) %]
+</form>
+</p>
+
+[% IF can_close_any && rct %]
+<form method='post' action='/support/actmulti'>
+    [% dw.form_auth() %]
+[% END %]
+
+    <p>
+    <table class='supporttable'>
+        <thead>
+        <tr>
+            [% "<th>&nbsp;X</th>" IF can_close_any %]
+            <th data-sort="int" data-name="id">ID#</th>
+            <th data-sort="string-ins" data-name="summary">[% '.th.summary' | ml %]</th>
+            <th data-sort="string-ins" data-name="area">[% '.th.problemarea' | ml %]</th>
+            <th data-sort="int" data-name="date">[% '.th.posted' | ml %]</th>
+            <th data-sort="int" data-name="recent">[% '.th.recent' | ml %]</th>
+            <th data-sort="string-ins" data-name="status">[% '.th.status' | ml %]</th>
+        </tr>
+        </thead>
+        <tbody>
+        [% FOR sp IN request_table %]
+        <tr valign='top' class="[% "$sp.color $sp.cat" %]">
+            [% IF can_close_any %]
+                <td>
+                [% IF sp.can_close %]
+                        [% form.checkbox( name = "check_$sp.id", id = "check_$sp.id", value = 0) %]
+                [% END %]
+                </td>
+            [% END %]
+            <td><b><a href="[% "$site.root/support/see_request?id=$sp.id" %]">[% sp.id %]</a></b></td>
+            <td><b>[% sp.subject %]</b>[% sp.des %]</td>
+            <td>[% sp.cat %]</td>
+            <td class="small" sort-data-value="[% sp.age %]">[% sp.age_text %]</td>
+            <td class="small" sort-data-value="[% sp.untouched %]">[% sp.untouched_text %]</td>
+            <td class="small">[% sp.status %]</td>
+        </tr>
+
+        [% END %]
+        </tbody>
+    </table>
+
+[% IF can_close_any && rct %]
+
+    my $time = time();
+    $ret .= LJ::html_hidden('ids', join(':', map { $_->{spid} } @support_log),
+    'spcatid', $fcat->{spcatid},
+    'ret', "/support/help?state=$state&cat=$filtercat&time=$time%s");
+[% form.submit(name = 'action:move', value = "Move Marked Requests") %]
+    to
+    [% form.select( name= 'changecat', selected = '', items = move_cats, class = 'inline') %]
+
+<br>
+
+    [% form.submit( name = 'action:close', value = "Close Marked Requests",
+         onclick = 'return confirm("Are you sure you want to close the marked requests?");') %]
+    (this is permanent)
+    <br>
+    [% form.submit( name = 'action:closewithpoints', value = 'Close Marked Requests, granting points to last responses',
+         onclick = 'return confirm("Are you sure you want to close the marked requests?");') %]
+</form>
+[% END %]
+<hr>
+<p>[% '.notifylink' | ml( url = 'href="./changenotify"') %]</p>
+<p>[% '.backlink' | ml( backurl = 'href="./"') %]</p>
+
+<script type="application/javascript">
+
+</script>

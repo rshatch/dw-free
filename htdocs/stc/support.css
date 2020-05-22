@@ -17,24 +17,21 @@
     width: 100%;
 }
 
-.support-requesttable-internal td {
-    border: 3px dotted #ff0000;
-    padding: 1em;
-}
-
-.support-requesttable-answer td {
-    border: 3px solid #00c000;
-    padding: 1em;
-}
-
-.support-requesttable-screened td {
-    border: 3px dashed #afaf00;
-    padding: 1em;
-}
-
-.support-requesttable-default td, .requestdiv {
+.support-reply, .requestdiv {
     border: 3px solid #000;
     padding: 1em;
+}
+
+.internal {
+    border: 3px dotted #ff0000;
+}
+
+.answer {
+    border: 3px solid #00c000;
+}
+
+.screened {
+    border: 3px dashed #afaf00;
 }
 
 fieldset.internal {
@@ -43,4 +40,28 @@ fieldset.internal {
 fieldset.internal legend span {
     box-sizing: border-box;
     padding-left: 1em;
+}
+
+.green, .green td {
+    background-color: #d0eed0;
+}
+.yellow, .yellow td {
+    background-color: #eeeed0;
+}
+.red, .red td {
+    background-color: #eed0d0;
+}
+.clicked, .clicked td {
+    background-color: #d0d0ee;
+}
+table.supporttable {
+    margin-left: 1px;
+}
+
+select.inline {
+display: inline-block;
+width: auto;}
+
+.support_subject {
+font-size: 1.1em;
 }

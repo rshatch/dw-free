@@ -5,6 +5,7 @@ use warnings;
 use DW::Controller;
 use DW::Routing;
 use DW::Template;
+use Data::Dumper;
 
 DW::Routing->register_string( '/support/act',            \&act_handler,            app => 1 );
 DW::Routing->register_string( '/support/actmulti',       \&actmulti_handler,       app => 1 );
@@ -24,24 +25,24 @@ sub act_handler {
         ( $action, $spid, $authcode, $splid ) = ( $1, $2, $3, $4 );
     }
 
-    return error_ml('.improper.arguments') unless $action =~ /(?:touch|close|unlock|lock)/;
+    return error_ml('/support/act.tt.improper.arguments') unless $action =~ /(?:touch|close|unlock|lock)/;
     $vars->{title} = "Request #$spid";
 
     LJ::Support::init_remote($remote);
     my $sp = LJ::Support::load_request($spid);
 
     if ( $sp->{'authcode'} ne $authcode ) {
-        return error_ml('.invalid.authcode');
+        return error_ml('/support/act.tt.invalid.authcode');
     }
 
     my $auth = LJ::Support::mini_auth($sp);
 
     if ( $action eq "touch" ) {
-        return error_ml('.request.locked')
+        return error_ml('/support/act.tt.request.locked')
             if LJ::Support::is_locked($sp);
 
         LJ::Support::touch_request($spid)
-            or return error_ml('.touch.failed');
+            or return error_ml('/support/act.tt.touch.failed');
 
         return $r->redirect("$LJ::SITEROOT/support/see_request?id=$spid")
             if LJ::Support::can_close( $sp, $remote );
@@ -50,9 +51,9 @@ sub act_handler {
     }
 
     if ( $action eq 'lock' ) {
-        return error_ml('.not.allowed.request')
+        return error_ml('/support/act.tt.not.allowed.request')
             unless $remote && LJ::Support::can_lock( $sp, $remote );
-        return error_ml('.request.already.locked')
+        return error_ml('/support/act.tt.request.already.locked')
             if LJ::Support::is_locked($sp);
 
         # close this request and IC on it
@@ -65,14 +66,14 @@ sub act_handler {
                 type   => 'internal',
             }
         );
-        return success_ml( '.request.has.been.locked',
+        return success_ml( '/support/act.tt.request.has.been.locked',
             { "requestlink" => "href='/support/see_request?id=$sp->{spid}'" } );
     }
 
     if ( $action eq 'unlock' ) {
-        return error_ml('.request.already.unlock')
+        return error_ml('/support/act.tt.request.already.unlock')
             unless $remote && LJ::Support::can_lock( $sp, $remote );
-        return error_ml('.request.not.locked')
+        return error_ml('/support/act.tt.request.not.locked')
             unless LJ::Support::is_locked($sp);
 
         # reopen this request and IC on it
@@ -85,12 +86,12 @@ sub act_handler {
                 type   => 'internal',
             }
         );
-        return success_ml( '.request.has.been.unlocked',
+        return success_ml( '/support/act.tt.request.has.been.unlocked',
             { "requestlink" => "href='/support/see_request?id=$sp->{spid}'" } );
     }
 
     if ( $action eq "close" ) {
-        return error_ml('.request.cannot.close')
+        return error_ml('/support/act.tt.request.cannot.close')
             unless LJ::Support::can_close( $sp, $remote, $auth );
 
         if ( $sp->{'state'} eq "open" ) {
@@ -103,7 +104,7 @@ sub act_handler {
                 my ( $userid, $timelogged, $aspid, $type ) = $sth->fetchrow_array;
 
                 if ( $aspid != $spid ) {
-                    return error_ml('.answer.you.credited');
+                    return error_ml('/support/act.tt.answer.you.credited');
                 }
 
                 ## can't credit yourself.
@@ -150,34 +151,39 @@ sub actmulti_handler {
     my $r      = $rv->{r};
     my $POST   = $r->post_args;
 
+    LJ::Support::init_remote($remote);
+
     return error_ml('error.invalidform') unless LJ::check_form_auth( $POST->{lj_form_auth} );
 
-    my $spcatid = $POST->{spcatid};
-    my $cats    = LJ::Support::load_cats($spcatid);
-    my $cat     = $cats->{$spcatid};
-    return error_ml('.cat.not.exist') unless $cat;
+    my $cats    = LJ::Support::load_cats();
+    warn Dumper($POST);
 
     # get ids of requests
-    my @ids = map { $_ + 0 } grep { $POST->{"check_$_"} } split( ':', $POST->{ids} );
-    return error_ml('.no.request') unless @ids;
+    my @ids;
+    foreach my $input (keys %$POST) {
+        next unless $input =~ /^check_(\d+)$/;
+        push @ids, $1;
+    }
+    return error_ml('/support/actmulti.tt.no.request') unless @ids;
 
     # just to be sane, limit it to 1000 requests
     @ids = splice @ids, 0, 1000 if scalar @ids > 1000;
+    my $requests = LJ::Support::load_requests( \@ids );
+
 
     # what action are they trying to take?
     if ( $POST->{'action:close'} ) {
-        my $can_close = 0;
-        $can_close = 1 if $remote && $remote->has_priv( 'supportclose', $cat->{catkey} );
-        $can_close = 1 if $cat->{public_read} && $remote && $remote->has_priv( 'supportclose', '' );
-        return error_ml('.not.have.access') unless $can_close;
+        foreach my $sp (@$requests) {
+            return error_ml('/support/actmulti.tt.not.have.access') unless LJ::Support::can_close($sp, $remote);
+        }
 
         # now close all of these requests
         my $dbh = LJ::get_db_writer();
         my $in  = join ',', @ids;
         $dbh->do(
 "UPDATE support SET state='closed', timeclosed=UNIX_TIMESTAMP(), timemodified=UNIX_TIMESTAMP() "
-                . "WHERE spid IN ($in) AND spcatid = ?",
-            undef, $spcatid
+                . "WHERE spid IN ($in)",
+            undef
         );
 
         # and now insert a log comment for all of these... note that we're not using
@@ -194,46 +200,45 @@ sub actmulti_handler {
 
         # return redirection back? or success message otherwise
         return BML::redirect( sprintf( $POST->{ret}, '' ) ) if $POST->{ret};
-        return success_ml('.request.specified');
+        return success_ml('/support/actmulti.tt.request.specified');
     }
     elsif ( $POST->{'action:closewithpoints'} ) {
-        my $can_close = 0;
-        $can_close = 1 if LJ::Support::can_close_cat( { _cat => $cat }, $remote );
-        return error_ml('.not.have.access') unless $can_close;
+        foreach my $sp (@$requests) {
+            my $can_close = LJ::Support::can_close($sp, $remote);
+            return error_ml('/support/actmulti.tt.not.have.access') unless $can_close;
 
+        }
         # let's implement a limit so that we don't overload
         # the DB and/or timeout
-        my @filtered_ids = splice( @ids, 0, 50 );
-
-        my $requests = LJ::Support::load_requests( \@filtered_ids );
 
         foreach my $sp (@$requests) {
-            LJ::Support::close_request_with_points( $sp, $cat, $remote );
+            LJ::Support::close_request_with_points( $sp, $sp->{spcatid}, $remote );
         }
 
         return $r->redirect( sprintf( $POST->{ret}, '&mark=' . join( ',', @ids ) ) )
             if $POST->{ret};
-        return success_ml('request.specified');
+        return success_ml('/support/actmulti.tt.request.specified');
     }
     elsif ( $POST->{'action:move'} ) {
-        return error_ml('.not.have.access.move.request')
-            unless LJ::Support::can_perform_actions( { _cat => $cat }, $remote );
+        foreach my $sp (@$requests) {
+            my $can_move = LJ::Support::can_perform_actions( $sp, $remote );
+            return error_ml('/support/actmulti.tt.not.have.access.move.request') unless $can_move;
 
+        }
         my $newcat = $POST->{'changecat'} + 0;
-        my $cats   = LJ::Support::load_cats();
-        return error_ml('.category.invalid') unless $cats->{$newcat};
+        return error_ml('/support/actmulti.tt.category.invalid') unless $cats->{$newcat};
 
         # now move all of these requests
         my $dbh = LJ::get_db_writer();
         my $in  = join ',', @ids;
-        $dbh->do( "UPDATE support SET spcatid = ? WHERE spid IN ($in) AND spcatid = ?",
-            undef, $newcat, $spcatid );
+        $dbh->do( "UPDATE support SET spcatid = ? WHERE spid IN ($in)",
+            undef, $newcat );
 
         # now add movement notices
         my @stmts;
-        foreach (@ids) {
-            push @stmts, "($_, UNIX_TIMESTAMP(), 'internal', $remote->{userid}, "
-                . "'(Mass move from $cats->{$spcatid}->{catname} to $cats->{$newcat}->{catname}.)')";
+        foreach my $sp (@$requests) {
+            push @stmts, "($sp->{spid}, UNIX_TIMESTAMP(), 'internal', $remote->{userid}, "
+                . "'(Mass move from $cats->{$sp->{spcatid}}->{catname} to $cats->{$newcat}->{catname}.)')";
         }
         my $sql = "INSERT INTO supportlog (spid, timelogged, type, userid, message) VALUES ";
         $sql .= join ',', @stmts;
@@ -241,7 +246,7 @@ sub actmulti_handler {
 
         # done now
         return $r->redirect( sprintf( $POST->{ret}, '' ) ) if $POST->{ret};
-        return success_ml('.request.moved');
+        return success_ml('/support/actmulti.tt.request.moved');
     }
 }
 
@@ -259,7 +264,7 @@ sub append_request_handler {
     return error_ml('.invalid.noid') unless $POST->{'spid'};
     my $spid = $POST->{'spid'} + 0;
     my $sp   = LJ::Support::load_request($spid);
-    return error_ml('.unknown.request') unless $sp;
+    return error_ml('/support/append_request.tt.unknown.request') unless $sp;
 
     LJ::Support::init_remote($remote);
     unless ( LJ::Support::can_append( $sp, $remote, $POST->{'auth'} ) || $remote ) {
@@ -275,7 +280,7 @@ sub append_request_handler {
     my $catkey = $scat->{'catkey'};
 
     $POST->{'summary'} = LJ::trim( $POST->{'summary'} );
-    return error_ml('.invalid.nosummary')
+    return error_ml('/support/append_request.tt.invalid.nosummary')
         if $POST->{'changesum'} && !$POST->{'summary'};
     ### links to show on success
     my $auth_arg = $POST->{'auth'} ? "&amp;auth=$POST->{'auth'}" : "";
@@ -301,33 +306,33 @@ sub append_request_handler {
 
     my $userfacing_action_type = $POST->{replytype};
     my $internal_action_type   = $POST->{internaltype};
-    return error_ml('.invalid.type')
+    return error_ml('/support/append_request.tt.invalid.type')
         if !$userfacing_action_type
         && !$internal_action_type    # we need at least one of these to be defined
         || $userfacing_action_type && !defined $answer_types{$userfacing_action_type}
         || $internal_action_type   && !defined $answer_types{$internal_action_type};
 
     ## can we do the action we want?
-    return error_ml('.internal.approve')
+    return error_ml('/support/append_request.tt.internal.approve')
         if $POST->{'approveans'}
         && ( $internal_action_type ne "internal" || !LJ::Support::can_help( $sp, $remote ) );
 
-    return error_ml('.internal.changecat')
+    return error_ml('/support/append_request.tt.internal.changecat')
         if $POST->{'changecat'}
         && ( $internal_action_type ne "internal"
         || !LJ::Support::can_perform_actions( $sp, $remote ) );
 
-    return error_ml('.internal.touch')
+    return error_ml('/support/append_request.tt.internal.touch')
         if ( $POST->{'touch'} || $POST->{'untouch'} )
         && ( $internal_action_type ne "internal"
         || !LJ::Support::can_perform_actions( $sp, $remote ) );
 
-    return error_ml('.internal.changesum')
+    return error_ml('/support/append_request.tt.internal.changesum')
         if $POST->{'changesum'}
         && ( $internal_action_type ne "internal"
         || !LJ::Support::can_change_summary( $sp, $remote ) );
 
-    return error_ml('.invalid.blank')
+    return error_ml('/support/append_request.tt.invalid.blank')
         if $POST->{reply} !~ /\S/ && $POST->{internal} !~ /\S/    # no text AND
         && !$POST->{'approveans'}
         && !$POST->{'changecat'}
@@ -341,7 +346,7 @@ sub append_request_handler {
         $splid = $POST->{'approveans'} + 0;
         $res   = LJ::Support::load_response($splid);
 
-        return error_ml('.invalid.noanswer')
+        return error_ml('/support/append_request.tt.invalid.noanswer')
             if ( $res->{'spid'} == $spid && $res->{'type'} ne "screened" );
 
         return LJ::bad_input('Invalid type to approve screened response as.')
@@ -355,7 +360,7 @@ sub append_request_handler {
         $newcat = $POST->{'changecat'} + 0;
         $cats   = LJ::Support::load_cats($newcat);
 
-        return error_ml('.invalid.notcat')
+        return error_ml('/support/append_request.tt.invalid.notcat')
             unless ( $cats->{$newcat} );
     }
 
@@ -379,16 +384,16 @@ sub append_request_handler {
     ## bounce request to email
     if ( $internal_action_type eq 'bounce' ) {
 
-        return error_ml('.bounce.noemail')
+        return error_ml('/support/append_request.tt.bounce.noemail')
             unless $POST->{'bounce_email'};
 
-        return error_ml('.bounce.notauth')
+        return error_ml('/support/append_request.tt.bounce.notauth')
             unless LJ::Support::can_bounce( $sp, $remote );
 
         # check given emails using LJ::check_email
         my @form_emails = split( /\s*,\s*/, $POST->{'bounce_email'} );
 
-        return error_ml('.bounce.toomany')
+        return error_ml('/support/append_request.tt.bounce.toomany')
             if @form_emails > 5;
 
         my @emails;    # error-checked, good emails

@@ -191,6 +191,8 @@ sub faqbrowse_handler {
     # get language settings
     my $curlang = $GET->{'lang'} || BML::get_language();
     my $deflang = BML::get_language_default();
+    warn $curlang;
+    warn $deflang;
     my $altlang = $curlang ne $deflang;
     my $mll     = LJ::Lang::get_lang($curlang);
     my $mld     = LJ::Lang::get_dom("faq");
@@ -210,9 +212,9 @@ sub faqbrowse_handler {
         # loading single faqid
         @faqs = ( LJ::Faq->load( $faqidarg, lang => $lang ) );
         unless ( $faqs[0] ) {
-            $title = LJ::Lang::ml( '.error.title_nofaq', { faqid => $faqidarg } );
-            $body  = LJ::Lang::ml('.error.nofaq');
-            return $_[1]->{'body'};
+            $title = LJ::Lang::ml( '/support/faqbrowse.tt.error.title_nofaq', { faqid => $faqidarg } );
+            $vars->{title} = $title;
+            return DW::Template->render_template( 'support/faqbrowse.tt', $vars );
         }
         $faqs[0]->render_in_place( { user => $user, url => $user_url } );
         $title = $faqs[0]->question_html;
@@ -229,8 +231,8 @@ sub faqbrowse_handler {
                 undef, $faqcatarg );
             die $dbr->errstr if $dbr->err;
         }
-
-        $title = LJ::Lang::ml( '.title_cat', { catname => LJ::ehtml($catname) } );
+        warn $catname;
+        $title = LJ::Lang::ml( '/support/faqbrowse.tt.title_cat', { catname => LJ::ehtml($catname) } );
         @faqs  = sort { $a->sortorder <=> $b->sortorder }
             LJ::Faq->load_all( lang => $lang, cat => $faqcatarg );
         LJ::Faq->render_in_place(
@@ -250,6 +252,7 @@ sub faqbrowse_handler {
     my $categoryname;
     my @cleanfaqs;
     my $qterm = $GET->{'q'};
+    warn $qterm;
     $vars->{q} = $qterm ? "&q=" . LJ::eurl($qterm) : "";
 
     foreach my $f (@faqs) {
@@ -341,7 +344,8 @@ sub faqbrowse_handler {
             'summary'         => $summary,
             'display_summary' => $display_summary,
             'display_answer'  => $display_summary,
-            'lastmodwho'      => $lastmodwho
+            'lastmodwho'      => $lastmodwho,
+            'lastmodtime'     => $f->lastmodtime
         };
 
         # this is incredibly ugly. i'm sorry.
@@ -408,41 +412,42 @@ sub faqsearch_handler {
     $vars->{sel}   = $sel;
     $vars->{q}     = $q;
 
-    return unless $q && length $q < 2;
+    if ($q && length($q) > 2) {
+        my $lang = $GET->{lang} || $curr || $LJ::DEFAULT_LANG;
+        my $user;
+        my $user_url;
 
-    my $lang = $GET->{lang} || $curr || $LJ::DEFAULT_LANG;
-    my $user;
-    my $user_url;
+        # Get remote username and journal URL, or example user's username and journal URL
+        if ($remote) {
+            $user = $remote->user;
+            $user_url = $remote->journal_base;
+        }
+        else {
+            my $u = LJ::load_user($LJ::EXAMPLE_USER_ACCOUNT);
+            $user = $u ? $u->user : "<b>[Unknown or undefined example username]</b>";
+            $user_url = $u ? $u->journal_base : "<b>[Unknown or undefined example username]</b>";
+        }
 
-    # Get remote username and journal URL, or example user's username and journal URL
-    if ($remote) {
-        $user     = $remote->user;
-        $user_url = $remote->journal_base;
+        my @results = LJ::Faq->load_matching($q, lang => $lang, user => $user, url => $user_url);
+        if (@results > 25) {@results = @results[ 0 .. 24 ];}
+
+        my $term = sub {
+            my $term = shift;
+            return "<span class='searchhighlight'>" . LJ::ehtml($term) . "</span>";
+        };
+
+        my @clean_results;
+        foreach my $f (@results) {
+            warn $f;
+            my $dq = $f->question_html;
+            $dq =~ s/(\Q$q\E)/$term->($1) /ige;
+            my $ueq = LJ::eurl($q);
+            my $ul = $GET->{'lang'} ne $curr ? "&amp;lang=" . $GET->{'lang'} : '';
+            my $clean = { dq => $dq, ueq => $ueq, ul => $ul, id => $f->faqid };
+            push @clean_results, $clean;
+        }
+        $vars->{results} = \@clean_results;
     }
-    else {
-        my $u = LJ::load_user($LJ::EXAMPLE_USER_ACCOUNT);
-        $user     = $u ? $u->user         : "<b>[Unknown or undefined example username]</b>";
-        $user_url = $u ? $u->journal_base : "<b>[Unknown or undefined example username]</b>";
-    }
-
-    my @results = LJ::Faq->load_matching( $q, lang => $lang, user => $user, url => $user_url );
-    if ( @results > 25 ) { @results = @results[ 0 .. 24 ]; }
-
-    my $term = sub {
-        my $term = shift;
-        return "<span class='searchhighlight'>" . LJ::ehtml($term) . "</span>";
-    };
-
-    my @clean_results;
-    foreach my $f (@results) {
-        my $dq = $f->question_html;
-        $dq =~ s/(\Q$q\E)/$term->($1) /ige;
-        my $ueq   = LJ::eurl($q);
-        my $ul    = $GET->{'lang'} ne $curr ? "&amp;lang=" . $GET->{'lang'} : '';
-        my $clean = { dq => $dq, ueq => $ueq, ul => $ul, id => $f->faqid };
-        push @clean_results, $clean;
-    }
-    $vars->{results} = \@clean_results;
     return DW::Template->render_template( 'support/faqsearch.tt', $vars );
 }
 
