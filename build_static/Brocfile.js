@@ -60,5 +60,6 @@ export default () => {
 
   return merge([imgDir, jsDir, stcDir, scssFinal], {
     annotation: 'Final merge',
+    overwrite: true,
   });
 }
