@@ -2,9 +2,8 @@
 // bunch of code from it -- seems that most people want to compile ONE sass file
 // for their app, and that's absolutely not how we roll over here.
 
-// Anyway, here's my thinking: give it a pre-funnelled list of thing.scss files
-// (with the _thing.scss partials already stripped out), and optionally some
-// extra include paths, and have it compile all of them to thing.css files. Ask
+// Anyway, here's my thinking: give it an scss directory, and optionally some
+// extra include paths, and have it compile all non-partials to thing.css files. Ask
 // Sass itself what the dependencies for each file were, and use those for
 // MultiFilter's caching/recompiling behavior.
 // Gonna be lazy and expect only a single inputPath, ignoring others.
@@ -47,7 +46,8 @@ class CompileAllScss extends MultiFilter {
     async build() {
         // Ignoring more than one inputPath.
         let inputPath = this.inputPaths[0];
-        let inputFiles = walkSync(inputPath).filter( inFile => inFile.split('.')[-1] === 'scss' );
+        // Exclude _partials.scss
+        let inputFiles = walkSync(inputPath).filter( inFile => path.extname(inFile) === '.scss' && path.basename(inFile).slice(0,1) !== '_' );
         return this.buildAndCache(
             inputFiles,
             async (relativePath, outputDirectory) => {

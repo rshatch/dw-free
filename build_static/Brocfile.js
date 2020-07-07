@@ -2,10 +2,10 @@ const { WatchedDir } = require('broccoli-source');
 const Funnel = require('broccoli-funnel');
 const merge = require('broccoli-merge-trees');
 const uglify = require('broccoli-uglify-sourcemap');
-const compileSass = require('broccoli-sass-source-maps')(require('sass'));
 const env = require('broccoli-env');
 
 import myDirs from './get_dirs';
+import CompileAllScss from './compile-all-scss';
 
 export default () => {
   // let htdocs = new WatchedDir('../htdocs');
@@ -29,8 +29,9 @@ export default () => {
   // SCSS: cross our fingers lmao
   let scssDir = new Funnel(htdocs, {
     srcDir: 'scss',
-    destDir: 'stc/css'
+    destDir: 'stc/css',
   });
+  let scssOutput = new CompileAllScss(scssDir);
 
-  return jsDir;
+  return merge(jsDir, stcDir, scssOutput);
 }
