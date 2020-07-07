@@ -32,9 +32,13 @@ export default () => {
     srcDir: 'scss',
     destDir: '.',
   });
-  let scssOutput = new CompileAllScss([scssDir], {
+  let sassOptions = {
     fiber: Fiber,
-  });
+  };
+  if (process.env.NODE_ENV === 'production') {
+    sassOptions.outputStyle = 'compressed';
+  }
+  let scssOutput = new CompileAllScss([scssDir], sassOptions);
   let scssFinal = new Funnel(scssOutput, {
     srcDir: '.',
     destDir: 'stc/css',
