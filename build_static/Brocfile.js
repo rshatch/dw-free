@@ -12,6 +12,12 @@ export default () => {
   // let htdocs = new WatchedDir('../htdocs');
   let htdocs = merge(myDirs.htdocs.map( dir => new WatchedDir(dir) ), {overwrite: true});
 
+  // Images: whatever
+  let imgDir = new Funnel(htdocs, {
+    srcDir: 'img',
+    destDir: 'img',
+  });
+
   // Vanilla ES5 JS: send it through the ES5 uglifier, if in prod.
   let jsDir = new Funnel(htdocs, {
     srcDir: 'js',
@@ -27,13 +33,15 @@ export default () => {
     destDir: 'stc'
   });
 
-  // SCSS: cross our fingers lmao
+  // SCSS: start w/ an isolated working directory, so the include paths work out
+  // more easily. Then compile to CSS, then move things to the expected final
+  // location.
   let scssDir = new Funnel(htdocs, {
     srcDir: 'scss',
     destDir: '.',
   });
   let sassOptions = {
-    fiber: Fiber,
+    fiber: Fiber, // slightly faster.
   };
   if (process.env.NODE_ENV === 'production') {
     sassOptions.outputStyle = 'compressed';
@@ -44,5 +52,5 @@ export default () => {
     destDir: 'stc/css',
   });
 
-  return merge([jsDir, stcDir, scssFinal]);
+  return merge([imgDir, jsDir, stcDir, scssFinal]);
 }
