@@ -46,7 +46,7 @@ class CompileAllScss extends MultiFilter {
         let inputPath = this.inputPaths[0];
         // Exclude _partials.scss
         let inputFiles = walkSync(inputPath).filter( inFile => path.extname(inFile) === '.scss' && path.basename(inFile).slice(0,1) !== '_' );
-        console.log(inputFiles);
+
         return this.buildAndCache(
             inputFiles,
             async (relativePath, outputDirectory) => {
@@ -65,7 +65,6 @@ class CompileAllScss extends MultiFilter {
                     ],
                 };
                 Object.assign(sassOptions, this.sassOptions);
-                console.log(sassOptions);
                 let result = await this.renderSass(sassOptions);
 
                 // actually write it
