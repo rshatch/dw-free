@@ -2,6 +2,7 @@ const { WatchedDir } = require('broccoli-source');
 const Funnel = require('broccoli-funnel');
 const merge = require('broccoli-merge-trees');
 const uglify = require('broccoli-uglify-sourcemap');
+const compileSass = require('broccoli-sass-source-maps')(require('sass'));
 const env = require('broccoli-env');
 
 import myDirs from './get_dirs';
@@ -10,12 +11,26 @@ export default () => {
   // let htdocs = new WatchedDir('../htdocs');
   let htdocs = merge(myDirs.htdocs.map( dir => new WatchedDir(dir) ), {overwrite: true});
 
-  let jsSubdir = new Funnel(htdocs, {
+  // Vanilla ES5 JS: send it through the ES5 uglifier, if in prod.
+  let jsDir = new Funnel(htdocs, {
     srcDir: 'js',
     destDir: 'js'
   });
   if (process.env.NODE_ENV === 'production') {
-    jsSubdir = uglify(jsSubdir);
+    jsDir = uglify(jsDir);
   }
-  return jsSubdir;
+
+  // Vanilla CSS (plus some maybe weird stuff?): just set it down over there, don't jostle it too hard.
+  let stcDir = new Funnel(htdocs, {
+    srcDir: 'stc',
+    destDir: 'stc'
+  });
+
+  // SCSS: cross our fingers lmao
+  let scssDir = new Funnel(htdocs, {
+    srcDir: 'scss',
+    destDir: 'stc/css'
+  });
+
+  return jsDir;
 }

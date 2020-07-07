@@ -5,8 +5,10 @@
     "broccoli-env": "^0.0.1",
     "broccoli-funnel": "^3.0.3",
     "broccoli-merge-trees": "^4.2.0",
+    "broccoli-sass-source-maps": "^4.0.0",
     "broccoli-source": "^3.0.0",
-    "broccoli-uglify-sourcemap": "^3.2.0"
+    "broccoli-uglify-sourcemap": "^3.2.0",
+    "sass": "^1.26.10"
   },
   "scripts": {
     "build": "broccoli build ../build/static"
