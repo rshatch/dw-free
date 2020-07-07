@@ -29,9 +29,13 @@ export default () => {
   // SCSS: cross our fingers lmao
   let scssDir = new Funnel(htdocs, {
     srcDir: 'scss',
-    destDir: 'stc/css',
+    destDir: '.',
   });
   let scssOutput = new CompileAllScss([scssDir]);
+  let scssFinal = new Funnel(scssOutput, {
+    srcDir: '.',
+    destDir: 'stc/css',
+  });
 
-  return merge([jsDir, stcDir, scssOutput]);
+  return merge([jsDir, stcDir, scssFinal]);
 }

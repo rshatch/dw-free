@@ -25,14 +25,12 @@ class CompileAllScss extends MultiFilter {
         super(inputNodes, options);
         options = options || {};
 
-        let extraIncludePaths = options.includePaths || [];
-        this.includePaths = [inputNodes, ...extraIncludePaths];
+        this.extraIncludePaths = options.includePaths || [];
 
         this.renderSass = RSVP.denodeify(sass.render);
         this.sassOptions = {
             importer: options.importer,
             functions: options.functions,
-            includePaths: this.includePaths,
             indentedSyntax: options.indentedSyntax,
             omitSourceMapUrl: options.omitSourceMapUrl,
             outputStyle: options.outputStyle,
@@ -48,6 +46,7 @@ class CompileAllScss extends MultiFilter {
         let inputPath = this.inputPaths[0];
         // Exclude _partials.scss
         let inputFiles = walkSync(inputPath).filter( inFile => path.extname(inFile) === '.scss' && path.basename(inFile).slice(0,1) !== '_' );
+        console.log(inputFiles);
         return this.buildAndCache(
             inputFiles,
             async (relativePath, outputDirectory) => {
@@ -60,8 +59,13 @@ class CompileAllScss extends MultiFilter {
                 let sassOptions = {
                     file: fullInputPath,
                     outFile: fullOutputPath,
+                    includePaths: [
+                        ...this.inputPaths,
+                        ...this.extraIncludePaths
+                    ],
                 };
                 Object.assign(sassOptions, this.sassOptions);
+                console.log(sassOptions);
                 let result = await this.renderSass(sassOptions);
 
                 // actually write it
