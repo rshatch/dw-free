@@ -20,3 +20,6 @@ t-theschwartz.sqlite
 
 # No tidying
 .tidyall.d/
+
+# node dependencies
+node_modules/
