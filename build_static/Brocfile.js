@@ -31,7 +31,7 @@ export default () => {
     srcDir: 'scss',
     destDir: 'stc/css',
   });
-  let scssOutput = new CompileAllScss(scssDir);
+  let scssOutput = new CompileAllScss([scssDir]);
 
-  return merge(jsDir, stcDir, scssOutput);
+  return merge([jsDir, stcDir, scssOutput]);
 }
