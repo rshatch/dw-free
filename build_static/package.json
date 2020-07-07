@@ -9,6 +9,7 @@
     "broccoli-sass-source-maps": "^4.0.0",
     "broccoli-source": "^3.0.0",
     "broccoli-uglify-sourcemap": "^3.2.0",
+    "fibers": "^5.0.0",
     "mkdirp": "^1.0.4",
     "rsvp": "^4.8.5",
     "sass": "^1.26.10",

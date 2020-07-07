@@ -3,6 +3,7 @@ const Funnel = require('broccoli-funnel');
 const merge = require('broccoli-merge-trees');
 const uglify = require('broccoli-uglify-sourcemap');
 const env = require('broccoli-env');
+const Fiber = require('fibers');
 
 import myDirs from './get_dirs';
 import CompileAllScss from './compile-all-scss';
@@ -31,7 +32,9 @@ export default () => {
     srcDir: 'scss',
     destDir: '.',
   });
-  let scssOutput = new CompileAllScss([scssDir]);
+  let scssOutput = new CompileAllScss([scssDir], {
+    fiber: Fiber,
+  });
   let scssFinal = new Funnel(scssOutput, {
     srcDir: '.',
     destDir: 'stc/css',
