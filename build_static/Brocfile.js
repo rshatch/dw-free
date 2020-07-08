@@ -28,10 +28,7 @@ export default () => {
   if (process.env.NODE_ENV === 'production') {
     jsDir = uglify(jsDir, {
       annotation: 'JS dir (uglify)',
-      mangle: false,
-      compress: {
-        defaults: true,
-      },
+      hiddenSourceMap: true, // until we stop w/ concat_res, they're useless.
     });
   }
 
