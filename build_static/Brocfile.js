@@ -2,7 +2,7 @@ const { WatchedDir } = require('broccoli-source');
 const Funnel = require('broccoli-funnel');
 const merge = require('broccoli-merge-trees');
 const uglify = require('broccoli-uglify-sourcemap');
-const cleanCSS = require('broccoli-clean-css');
+const CleanCSS = require('broccoli-clean-css');
 const env = require('broccoli-env');
 const Fiber = require('fibers');
 
