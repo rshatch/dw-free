@@ -32,7 +32,6 @@ export default () => {
       compress: {
         defaults: true,
       },
-      publicUrl: '/',
     });
   }
 
