@@ -8,7 +8,6 @@ const Fiber = require('fibers');
 
 import myDirs from './get_dirs';
 import CompileAllScss from './compile-all-scss';
-import CleanCSS from 'clean-css';
 
 export default () => {
   // let htdocs = new WatchedDir('../htdocs');
