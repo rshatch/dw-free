@@ -26,7 +26,13 @@ export default () => {
     annotation: 'JS dir (copy)',
   });
   if (process.env.NODE_ENV === 'production') {
-    jsDir = uglify(jsDir, {annotation: 'JS dir (uglify)'});
+    jsDir = uglify(jsDir, {
+      annotation: 'JS dir (uglify)',
+      mangle: false,
+      compress: {
+        defaults: true,
+      },
+    });
   }
 
   // Vanilla CSS (plus some maybe weird stuff?): just set it down over there, don't jostle it too hard.
