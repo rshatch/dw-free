@@ -2,11 +2,13 @@ const { WatchedDir } = require('broccoli-source');
 const Funnel = require('broccoli-funnel');
 const merge = require('broccoli-merge-trees');
 const uglify = require('broccoli-uglify-sourcemap');
+const cleanCSS = require('broccoli-clean-css');
 const env = require('broccoli-env');
 const Fiber = require('fibers');
 
 import myDirs from './get_dirs';
 import CompileAllScss from './compile-all-scss';
+import CleanCSS from 'clean-css';
 
 export default () => {
   // let htdocs = new WatchedDir('../htdocs');
@@ -32,12 +34,23 @@ export default () => {
     });
   }
 
-  // Vanilla CSS (plus some maybe weird stuff?): just set it down over there, don't jostle it too hard.
+  // Vanilla CSS PLUS some maybe weird stuff? just set it down over there, don't jostle it too hard.
   let stcDir = new Funnel(htdocs, {
     srcDir: 'stc',
     destDir: 'stc',
     annotation: 'stc dir (copy)',
   });
+
+  // CSS compression for prod:
+  if (process.env.NODE_ENV === 'production') {
+    let compressed = new CleanCSS(stcDir, {
+      annotation: 'cleaned CSS from stc dir',
+    });
+    stcDir = merge([stcDir, compressed], {
+      annotation: 'stc dir (with cleaned CSS)',
+      overwrite: true,
+    });
+  }
 
   // SCSS: start w/ an isolated working directory, so the include paths work out
   // more easily. Then compile to CSS, then move things to the expected final
