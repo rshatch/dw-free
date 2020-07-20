@@ -3,7 +3,8 @@ const Funnel = require('broccoli-funnel');
 const merge = require('broccoli-merge-trees');
 const uglify = require('broccoli-uglify-sourcemap');
 const CleanCSS = require('broccoli-clean-css');
-const env = require('broccoli-env');
+// const env = require('broccoli-env');
+// (gotta sort out how we're handling the prod vs. dev signal.)
 const Fiber = require('fibers');
 
 import myDirs from './get_dirs';
