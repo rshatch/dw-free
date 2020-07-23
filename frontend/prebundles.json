@@ -1,10 +1,5 @@
 {
-  "base_6alib_css": [
-    "stc/esn.css",
-    "stc/lj_base.css",
-    "stc/contextualhover.css"
-  ],
-  "base_6alib_js": [
+  "lib_legacy_js": [
     "js/6alib/core.js",
     "js/6alib/dom.js",
     "js/6alib/httpreq.js",
@@ -20,7 +15,12 @@
     "js/6alib/datasource.js",
     "js/6alib/selectable_table.js"
   ],
-  "base_foundation_js": [
+  "lib_legacy_css": [
+    "stc/esn.css",
+    "stc/lj_base.css",
+    "stc/contextualhover.css"
+  ],
+  "lib_foundation_js": [
     "js/jquery/jquery-1.8.3.js",
     "js/foundation/vendor/custom.modernizr.js",
     "js/foundation/foundation/foundation.js",
@@ -37,59 +37,42 @@
     "js/jquery.hoverIntent.js",
     "js/jquery.contextualhover.js"
   ],
-  "base_foundation_nonskin_css": [
+  "lib_foundation_css": [
     "stc/lj_base.css",
     "stc/esn.css",
-    "stc/css/foundation/foundation_minimal.css",
-    "stc/jquery/jquery.ui.core.css",
-    "stc/jquery/jquery.ui.tooltip.css",
+    "stc/jquery/jquery.ui.autocomplete.css",
     "stc/jquery/jquery.ui.button.css",
+    "stc/jquery/jquery.ui.core.css",
     "stc/jquery/jquery.ui.dialog.css",
-    "stc/jquery/jquery.ui.theme.smoothness.css",
+    "stc/jquery/jquery.ui.menu.css",
+    "stc/jquery/jquery.ui.tooltip.css",
     "stc/jquery.contextualhover.css"
   ],
-  "base_foundation_siteskins_css": [
-    "stc/lj_base.css",
-    "stc/esn.css"
-  ],
-  "base_foundation_siteskins_js": [],
-  "base_jquery_css": [
-    "stc/lj_base.css",
-    "stc/jquery/jquery.ui.core.css",
-    "stc/jquery/jquery.ui.dialog.css"
-  ],
-  "base_jquery_js": [
+  "lib_jquery_js": [
     "js/jquery/jquery-1.8.3.js",
+    "js/dw/dw-core.js",
     "js/jquery/jquery.ui.core.js",
     "js/jquery/jquery.ui.widget.js",
+    "js/jquery/jquery.ui.tooltip.js",
+    "js/jquery/jquery.ui.button.js",
     "js/jquery/jquery.ui.dialog.js",
-    "js/dw/dw-core.js"
+    "js/jquery/jquery.ui.position.js",
+    "js/jquery.ajaxtip.js",
+    "js/jquery.hoverIntent.js",
+    "js/jquery.contextualhover.js"
   ],
-  "icon_browser_css": [
-    "stc/css/components/icon-browser.css"
+  "lib_jquery_css": [
+    "stc/lj_base.css",
+    "stc/esn.css",
+    "stc/jquery/jquery.ui.autocomplete.css",
+    "stc/jquery/jquery.ui.button.css",
+    "stc/jquery/jquery.ui.core.css",
+    "stc/jquery/jquery.ui.dialog.css",
+    "stc/jquery/jquery.ui.menu.css",
+    "stc/jquery/jquery.ui.tooltip.css",
+    "stc/jquery.contextualhover.css"
   ],
-  "icon_browser_js": [
-    "js/components/jquery.icon-browser.js"
-  ],
-  "icon_browser_old_css": [
-    "stc/jquery.iconselector.css"
-  ],
-  "icon_browser_old_js": [
-    "js/jquery.iconselector.js"
-  ],
-  "icon_browser_oldold_css": [
-    "stc/ups.css"
-  ],
-  "icon_browser_oldold_js": [
-    "js/userpicselect.js"
-  ],
-  "journal_content_css": [
-    "stc/css/components/quick-reply.css",
-    "stc/css/components/talkform.css",
-    "stc/css/components/imageshrink.css",
-    "stc/jquery.commentmanage.css"
-  ],
-  "journal_content_js": [
+  "app_journal_js": [
     "js/jquery.esn.js",
     "js/jquery.replyforms.js",
     "js/jquery.poll.js",
@@ -103,8 +86,10 @@
     "js/jquery.default-editor.js",
     "js/jquery.commentmanage.js"
   ],
-  "journal_shortcut_js": [
-    "js/shortcuts.js",
-    "js/jquery.shortcuts.nextentry.js"
+  "app_journal_css": [
+    "stc/css/components/quick-reply.css",
+    "stc/css/components/talkform.css",
+    "stc/css/components/imageshrink.css",
+    "stc/jquery.commentmanage.css"
   ]
 }

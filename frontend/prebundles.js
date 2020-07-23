@@ -1,3 +1,5 @@
+// This is dead code for now, I'm just doing stuff in json for the time being.
+
 let prebundles = {
     base_jquery_js: [
         'js/jquery/jquery-1.8.3.js',
