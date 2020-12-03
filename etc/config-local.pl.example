@@ -23,8 +23,8 @@
 {
     package LJ;
 
-    # keep this enabled only if this site is a development server
-    $IS_DEV_SERVER = 1;
+    # set the DW_DEV environment value to 1  only if this site is a development server
+    $IS_DEV_SERVER = $ENV{'DW_DEV'};
 
     # home directory
     $HOME = $ENV{'LJHOME'};

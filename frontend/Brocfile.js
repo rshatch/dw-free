@@ -3,16 +3,15 @@ const Funnel = require('broccoli-funnel');
 const merge = require('broccoli-merge-trees');
 const uglify = require('broccoli-uglify-sourcemap');
 const CleanCSS = require('broccoli-clean-css');
-// const env = require('broccoli-env');
-// (gotta sort out how we're handling the prod vs. dev signal.)
 const Fiber = require('fibers');
 
-import myDirs from './get_dirs';
 import CompileAllScss from './compile-all-scss';
+import { execSync } from 'child_process';
 
 export default () => {
-  // let htdocs = new WatchedDir('../htdocs');
-  let htdocs = merge(myDirs.htdocs.map( dir => new WatchedDir(dir) ), {overwrite: true});
+  let myDirs = execSync("find $LJHOME -type d -path *htdocs").toString().split("\n");
+
+  let htdocs = merge(myDirs.map( dir => new WatchedDir(dir) ), {overwrite: true});
 
   // Images: whatever
   let imgDir = new Funnel(htdocs, {
@@ -27,7 +26,10 @@ export default () => {
     destDir: 'js',
     annotation: 'JS dir (copy)',
   });
-  if (process.env.NODE_ENV === 'production') {
+
+  // Slightly ugly check because JS's truthiness settings are odd
+  let isDev = process.env.DW_DEV;
+  if (!isDev || isDev==="0") {
     jsDir = uglify(jsDir, {
       annotation: 'JS dir (uglify)',
       hiddenSourceMap: true, // until we stop w/ concat_res, they're useless.
