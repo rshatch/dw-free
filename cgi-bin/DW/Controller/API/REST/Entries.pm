@@ -390,16 +390,21 @@ sub rest_get {
 
         # load the rest of our data
         my $entry = {};
-        $entry->{subject} = $item->subject_html();
-        $entry->{text} = $item->event_html(0);
-        $entry->{poster} = $item->{'u'}{name};
+        $entry->{subject_html} = $item->subject_html();
+        $entry->{body_html} = $item->event_html(0);
+        $entry->{poster} = $item->poster()->{user};
         $entry->{url} = $item->url();
         $entry->{security} = $item->security();
         my @entry_tags = $item->tags();
         $entry->{tags} = (\@entry_tags);
-        $entry->{icon} = $item->userpic() || '';
+        $entry->{icon} = $item->userpic_kw || '';
         $entry->{entry_id} = delete $item->{ditemid};
         #$item->{metadata} = $item->currents;
+
+        if($item->editable_by($remote)) {
+            $entry->{body_raw} = $item->event_raw();
+            $entry->{subject_raw} = $item->subject_raw();
+        }
     
         return $self->rest_ok( $entry );
 
