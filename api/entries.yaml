@@ -26,15 +26,13 @@ paths:
           description: Journal or entry specified does not exist.
         403:
           description: You aren't authorized to view that entry.
-    post:
+    patch:
       description: Edit a specified journal entry.
       requestBody:
         content:
           application/json:
             schema:
               type: object
-              required:
-              - text
               properties:
                 subject:
                   type: string
@@ -67,8 +65,8 @@ paths:
                   items:
                     type: string
       responses:
-        200:
-          description: The new entry in JSON format.
+        204:
+          description: The entry has been updated.
         400:
           description: Bad input value supplied.
         404:

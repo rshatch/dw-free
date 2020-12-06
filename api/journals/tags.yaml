@@ -30,8 +30,8 @@ paths:
               items:
                 type: string
       responses:
-        200:
-          description: The newly created tags.
+        204:
+          description: Tags were successfully created.
         403:
           description: You cannot create tags on that journal.
         404:
@@ -45,8 +45,8 @@ paths:
           schema:
             type: string
       responses:
-        200:
-          description: The newly deleted tags.
+        204:
+          description: The tags were successfully deleted.
         403:
           description: You cannot remove tags on that journal.
         404:

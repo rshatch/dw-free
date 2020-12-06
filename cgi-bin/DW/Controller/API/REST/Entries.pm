@@ -388,24 +388,7 @@ sub rest_get {
 
         return $self->rest_error('403') unless $item->visible_to($remote);
 
-        # load the rest of our data
-        my $entry = {};
-        $entry->{subject_html} = $item->subject_html();
-        $entry->{body_html} = $item->event_html(0);
-        $entry->{poster} = $item->poster()->{user};
-        $entry->{url} = $item->url();
-        $entry->{security} = $item->security();
-        my @entry_tags = $item->tags();
-        $entry->{tags} = (\@entry_tags);
-        $entry->{icon} = $item->userpic_kw || '';
-        $entry->{entry_id} = delete $item->{ditemid};
-        #$item->{metadata} = $item->currents;
-
-        if($item->editable_by($remote)) {
-            $entry->{body_raw} = $item->event_raw();
-            $entry->{subject_raw} = $item->subject_raw();
-        }
-    
+        my $entry = json_from_entry($remote, $item);
         return $self->rest_ok( $entry );
 
     } else {
@@ -453,21 +436,39 @@ sub rest_get {
             posterid      => $journal->is_community && $poster ? $poster->id : undef,
             );
 
+        my @entries;
         foreach my $it ( @items ) {
-            my $itemid  = delete $it->{'itemid'};
-            my $ditemid = $itemid*256 + delete $it->{'anum'};
-            $it->{entry_id} = $ditemid;
-
-            my $posterid = delete $it->{posterid};
-            my $poster = LJ::load_userid($posterid);
-            $it->{poster} = $poster->{user};
-            delete $it->{alldatepart};
-            delete $it->{system_alldatepart};
-
-            $it->{server_time} = delete $it->{'logtime'};
+            my $item = LJ::Entry->new( $journal, jitemid => $it->{itemid});
+            my $entry = json_from_entry($journal, $item);
+            push @entries, $entry;
         }
-        return $self->rest_ok( \@items );
+        return $self->rest_ok( \@entries );
     }
+}
+
+sub json_from_entry {
+    my ($remote, $item) = @_;
+
+    my $entry = {};
+    $entry->{subject_html} = $item->subject_html();
+    $entry->{body_html} = $item->event_html(0);
+    $entry->{poster} = $item->poster()->{user};
+    $entry->{url} = $item->url();
+    $entry->{security} = $item->security();
+    $entry->{datetime} = $item->{eventtime};
+    my @entry_tags = $item->tags();
+    $entry->{tags} = (\@entry_tags);
+    $entry->{icon} = $item->userpic_kw || '';
+    $entry->{entry_id} = delete $item->{ditemid};
+    #$item->{metadata} = $item->currents;
+
+    if($item->editable_by($remote)) {
+        $entry->{body_raw} = $item->event_raw();
+        $entry->{subject_raw} = $item->subject_raw();
+        $entry->{allowmask} = $item->allowmask;
+    }
+
+    return $entry;
 }
 
 ###################################################

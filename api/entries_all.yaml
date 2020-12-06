@@ -41,6 +41,11 @@ paths:
           description: The security level to filter fetched entries by
           schema:
             type: string
+        - name: full
+          in: query
+          description: Whether to load subject and body text
+          schema:
+            type: boolean
       responses:
         200:
           description: a list of recent entries
